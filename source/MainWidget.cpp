@@ -111,7 +111,7 @@ void MainWidget::paintGL()
     }
 
     _program->enableTexture(true);
-    _program->setMatrix(_projectionMatrix * _camera.matrix());
+    _program->setMatrix(_projectionMatrix * _viewMatrix);
     _program->setHighlight(QVector4D());
     glBindTexture(GL_TEXTURE_2D, _tableTexture);
     _tableBuffer->draw(*_program);
@@ -222,11 +222,13 @@ void MainWidget::wheelEvent(QWheelEvent* event)
 void MainWidget::onTimer()
 {
     _animations.updateAll();
-    _camera.update();
+
+    _viewMatrix.setToIdentity();
+    _camera.apply(_viewMatrix);
 
     for (int i = 0; i < _locationActors.size(); ++i)
     {
-        _locationActors[i].update(_camera.matrix());
+        _locationActors[i].update(_viewMatrix);
     }
 
     updateGL();
@@ -292,7 +294,7 @@ QVector3D MainWidget::unproject(QPoint pixel)
     v.setW(1.0f);
 
     QMatrix4x4 modelViewProjectionMatrix = _projectionMatrix
-        * _camera.matrix();
+        * _viewMatrix;
     QMatrix4x4 inverse = modelViewProjectionMatrix.inverted();
     return (inverse * v).toVector3DAffine();
 }

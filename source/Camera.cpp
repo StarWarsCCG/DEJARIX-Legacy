@@ -9,13 +9,12 @@ Camera::~Camera()
 {
 }
 
-void Camera::update()
+void Camera::apply(QMatrix4x4& matrix)
 {
-    _matrix.setToIdentity();
-    _matrix.translate(0.0f, 0.0f, -_distance);
-    _matrix.rotate(_angle.toDegrees(), 1.0f, 0.0f, 0.0f);
-    _matrix.rotate(_rotation.toDegrees(), 0.0f, 0.0f, 1.0f);
-    _matrix.translate(-_position);
+    matrix.translate(0.0f, 0.0f, -_distance);
+    matrix.rotate(_angle.toDegrees(), 1.0f, 0.0f, 0.0f);
+    matrix.rotate(_rotation.toDegrees(), 0.0f, 0.0f, 1.0f);
+    matrix.translate(-_position);
 }
 
 void Camera::panRelative(float x, float y)

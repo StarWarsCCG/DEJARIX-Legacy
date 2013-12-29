@@ -58,6 +58,7 @@ private:
     QMatrix4x4 _projectionMatrix;
     GLuint _tableTexture;
     Camera _camera;
+    QMatrix4x4 _viewMatrix;
     bool _isCameraMoving;
     QPoint _mouse;
 
