@@ -1,24 +1,24 @@
 #include "CardActor.hpp"
 
 CardActor::CardActor()
-    : _topTexture(0)
-    , _bottomTexture(0)
-    , _isTopVisible(true)
-    , _depthFactor(1.0f)
+    : _topTexture(0),
+    _bottomTexture(0),
+    _isTopVisible(true),
+    _depthFactor(1.0f)
 {
 }
 
 CardActor::CardActor(const CardActor& other)
-    : _topTexture(other._topTexture)
-    , _bottomTexture(other._bottomTexture)
-    , _isTopVisible(other._isTopVisible)
-    , _depthFactor(other._depthFactor)
-    , _highlight(other._highlight)
-    , _position(other._position)
-    , _rotation(other._rotation)
-    , _flip(other._flip)
-    , _modelMatrix(other._modelMatrix)
-    , _modelViewMatrix(other._modelViewMatrix)
+    : _topTexture(other._topTexture),
+    _bottomTexture(other._bottomTexture),
+    _isTopVisible(other._isTopVisible),
+    _depthFactor(other._depthFactor),
+    _highlight(other._highlight),
+    _position(other._position),
+    _rotation(other._rotation),
+    _flip(other._flip),
+    _modelMatrix(other._modelMatrix),
+    _modelViewMatrix(other._modelViewMatrix)
 {
 }
 

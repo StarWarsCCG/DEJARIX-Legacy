@@ -4,7 +4,7 @@
 #include "Camera.hpp"
 #include "CardDrawTool.hpp"
 #include "TableBuffer.hpp"
-#include "MainProgram.hpp"
+#include "BasicProgram.hpp"
 #include "AnimationCollection.hpp"
 #include "swccg/LocationPopper.hpp"
 #include <QWidget>
@@ -12,13 +12,14 @@
 #include <QOpenGLFunctions>
 #include <QImage>
 #include <QVector>
+#include <QPoint>
 
 namespace MouseMode
 {
     enum Mode { None, InsertLocation };
 }
 
-class MainWidget : public QGLWidget, protected QOpenGLFunctions
+class MainWidget : public QGLWidget
 {
     Q_OBJECT
 
@@ -44,9 +45,10 @@ protected:
 private:
     GLuint loadImage(const QImage& image);
     GLuint loadText(const QString& text);
-    QVector3D unproject(int x, int y);
+    QVector3D unproject(QPoint pixel);
 
-    MainProgram* _program;
+    QOpenGLFunctions _functions;
+    BasicProgram* _program;
     CardBuffer* _cardBuffer;
     CardDrawTool* _drawTool;
     TableBuffer* _tableBuffer;
@@ -57,8 +59,7 @@ private:
     GLuint _tableTexture;
     Camera _camera;
     bool _isCameraMoving;
-    int _mouseX;
-    int _mouseY;
+    QPoint _mouse;
 
     GLuint _textures[2];
     QVector<CardActor> _locationActors;

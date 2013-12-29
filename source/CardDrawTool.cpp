@@ -1,10 +1,11 @@
 #include "CardDrawTool.hpp"
+#include <QDebug>
 
-CardDrawTool::CardDrawTool(MainProgram& program, CardBuffer& buffer,
+CardDrawTool::CardDrawTool(BasicProgram& program, CardBuffer& buffer,
     QMatrix4x4& projectionMatrix)
-    : _program(program)
-    , _buffer(buffer)
-    , _projectionMatrix(projectionMatrix)
+    : _program(program),
+    _buffer(buffer),
+    _projectionMatrix(projectionMatrix)
 {
 }
 
@@ -14,7 +15,7 @@ CardDrawTool::~CardDrawTool()
 
 void CardDrawTool::bind()
 {
-    _buffer.bind(_program.positionAttribute(), _program.textureAttribute());
+    _buffer.bind(_program);
 }
 
 void CardDrawTool::draw(CardActor& actor)

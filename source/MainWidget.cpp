@@ -1,27 +1,29 @@
 #include "MainWidget.hpp"
+#include "MenuRing.hpp"
 #include <QDebug>
 #include <QMouseEvent>
 #include <QTimer>
 #include <QPainter>
 #include <QVector2D>
 
-MainWidget::MainWidget(QWidget* parent) : QGLWidget(parent)
+MainWidget::MainWidget(QWidget* parent)
+    : QGLWidget(parent)
+    , _program(nullptr)
+    , _cardBuffer(nullptr)
+    , _drawTool(nullptr)
+    , _tableBuffer(nullptr)
+    , _isCameraMoving(false)
+    , _locationSpan(0.0f)
+    , _mouseMode(MouseMode::None)
 {
-    _program = 0;
-    _cardBuffer = 0;
-    _drawTool = 0;
-    _tableBuffer = 0;
-    _isCameraMoving = false;
-    _locationSpan = 0.0f;
-    _mouseMode = MouseMode::None;
     _camera.distance(32.0f);
-    _camera.angle(Rotation::fromDegrees(-10.0f));
+    _camera.angle(RotationF::fromDegrees(-10.0f));
     setMouseTracking(true);
 }
 
 MainWidget::~MainWidget()
 {
-    _program->release();
+    _program->close();
 
     deleteTexture(_textures[1]);
     deleteTexture(_textures[0]);
@@ -34,13 +36,13 @@ MainWidget::~MainWidget()
 
 void MainWidget::initializeGL()
 {
-    initializeOpenGLFunctions();
+    _functions.initializeOpenGLFunctions();
 
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
-    _program = new MainProgram;
+    _program = new BasicProgram(_functions);
 
     _tableTexture = loadImage(QImage("../wood.jpg"));
     //_tableTexture = loadText("DEJARIX");
@@ -52,7 +54,7 @@ void MainWidget::initializeGL()
     CardBuilder builder(specifications);
     _cardBuffer = new CardBuffer(builder);
     _drawTool = new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix);
-    _tableBuffer = new TableBuffer;
+    _tableBuffer = new TableBuffer(_functions);
 
     _locationSpan = _cardBuffer->specifications().height()
         + 1.0f / 8.0f;
@@ -63,7 +65,7 @@ void MainWidget::initializeGL()
         actor.topTexture(_textures[0]);
         actor.bottomTexture(_textures[1]);
 
-        actor.rotation(Rotation::fromDegrees(90.0f));
+        actor.rotation(RotationF::fromDegrees(90.0f));
 
         _locationActors.append(actor);
     }
@@ -85,7 +87,7 @@ void MainWidget::initializeGL()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
 
-    _program->bind();
+    _program->open();
 }
 
 void MainWidget::resizeGL(int w, int h)
@@ -112,9 +114,7 @@ void MainWidget::paintGL()
     _program->setMatrix(_projectionMatrix * _camera.matrix());
     _program->setHighlight(QVector4D());
     glBindTexture(GL_TEXTURE_2D, _tableTexture);
-    _tableBuffer->bind(_program->positionAttribute(),
-        _program->textureAttribute());
-    _tableBuffer->draw();
+    _tableBuffer->draw(*_program);
 }
 
 void MainWidget::mousePressEvent(QMouseEvent* event)
@@ -122,13 +122,29 @@ void MainWidget::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::RightButton)
     {
         _isCameraMoving = true;
-        _mouseX = event->x();
-        _mouseY = event->y();
+        _mouse = event->pos();
     }
     else if (event->button() == Qt::LeftButton)
     {
-        QVector3D result = unproject(event->x(), event->y());
-        qDebug() << result;
+        //QVector3D result = unproject(event->x(), event->y());
+        //qDebug() << result;
+
+        QPoint center(width() / 2, height() / 2);
+        QPoint direction = event->pos() - center;
+        //qDebug() << "center: " << center;
+        //qDebug() << "click: " << event->pos();
+        qDebug() << "direction: " << direction;
+
+        RotationF rotation;
+
+        if (MenuRing::tryGetAngle(direction, 8, rotation))
+        {
+            qDebug() << "result: " << rotation.toDegrees();
+        }
+        else
+        {
+            qDebug() << "too close to origin";
+        }
     }
 }
 
@@ -140,7 +156,7 @@ void MainWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void MainWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    QVector3D mousePosition = unproject(event->x(), event->y());
+    QVector3D mousePosition = unproject(event->pos());
     float radius = _locationSpan / 2.0f;
 
     if (_mouseMode == MouseMode::None)
@@ -172,8 +188,8 @@ void MainWidget::mouseMoveEvent(QMouseEvent* event)
             {
                 _locationTarget = locationTarget;
 
-                CardActor* a = 0;
-                CardActor* b = 0;
+                CardActor* a = nullptr;
+                CardActor* b = nullptr;
 
                 if (_locationTarget > -1)
                     a = _locationActors.data() + _locationTarget;
@@ -188,21 +204,19 @@ void MainWidget::mouseMoveEvent(QMouseEvent* event)
 
     if (_isCameraMoving)
     {
-        int deltaX = event->x() - _mouseX;
-        int deltaY = event->y() - _mouseY;
+        QPoint delta = event->pos() - _mouse;
 
-        _camera.adjustRotation(Rotation::fromDegrees(float(deltaX) / 3.0f));
-        _camera.adjustAngle(Rotation::fromDegrees(float(deltaY) / 3.0f));
+        _camera.adjustRotation(RotationF::fromDegrees(float(delta.x()) / 3.0f));
+        _camera.adjustAngle(RotationF::fromDegrees(float(delta.y()) / 3.0f));
 
-        _mouseX = event->x();
-        _mouseY = event->y();
+        _mouse = event->pos();
     }
 }
 
 void MainWidget::wheelEvent(QWheelEvent* event)
 {
-    const float delta = 3.0f;
-    _camera.adjustDistance(event->delta() > 0 ? -delta : delta);
+    const float Delta = 3.0f;
+    _camera.adjustDistance(event->delta() > 0 ? -Delta : Delta);
 }
 
 void MainWidget::onTimer()
@@ -239,7 +253,7 @@ GLuint MainWidget::loadImage(const QImage& image)
             result = bindTexture(image);
         }
 
-        glGenerateMipmap(GL_TEXTURE_2D);
+        _functions.glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     return result;
@@ -263,9 +277,10 @@ GLuint MainWidget::loadText(const QString& text)
     return result;
 }
 
-QVector3D MainWidget::unproject(int x, int y)
+QVector3D MainWidget::unproject(QPoint pixel)
 {
-    y = height() - y;
+    int x = pixel.x();
+    int y = height() - pixel.y();
 
     GLfloat depthSample;
     glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depthSample);

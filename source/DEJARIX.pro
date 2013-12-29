@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = DEJARIX
 TEMPLATE = app
-
+CONFIG += c++11
 
 SOURCES += main.cpp\
         MainWindow.cpp \
@@ -18,9 +18,7 @@ SOURCES += main.cpp\
     CardSpecifications.cpp \
     CardBuilder.cpp \
     CardBuffer.cpp \
-    MainProgram.cpp \
     CardActor.cpp \
-    Rotation.cpp \
     Camera.cpp \
     Animation.cpp \
     TableBuffer.cpp \
@@ -28,14 +26,17 @@ SOURCES += main.cpp\
     swccg/Card.cpp \
     CardDrawTool.cpp \
     MenuRing.cpp \
-    swccg/LocationPopper.cpp
+    swccg/LocationPopper.cpp \
+    MenuRingItem.cpp \
+    BasicBuilder.cpp \
+    BasicProgram.cpp \
+    BasicBufferObject.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
     CardSpecifications.hpp \
     CardBuilder.hpp \
     CardBuffer.hpp \
-    MainProgram.hpp \
     CardActor.hpp \
     Rotation.hpp \
     Camera.hpp \
@@ -45,4 +46,8 @@ HEADERS  += MainWindow.hpp \
     swccg/Card.hpp \
     CardDrawTool.hpp \
     MenuRing.hpp \
-    swccg/LocationPopper.hpp
+    swccg/LocationPopper.hpp \
+    MenuRingItem.hpp \
+    BasicBuilder.hpp \
+    BasicProgram.hpp \
+    BasicBufferObject.hpp
