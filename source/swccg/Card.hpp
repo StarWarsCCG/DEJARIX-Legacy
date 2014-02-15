@@ -1,23 +1,19 @@
 #ifndef CARD_HPP
 #define CARD_HPP
 
-#include <QOpenGLFunctions>
-
-class Card
+namespace StarWarsCCG
 {
-public:
-    Card(GLuint frontTexture, GLuint backTexture);
-    Card(const Card& other);
-    ~Card();
+    class Card
+    {
+        public:
+            Card();
+            Card(const Card& other);
+            ~Card();
 
-    Card& operator=(const Card& other);
+            Card& operator=(const Card& other);
 
-    inline GLuint frontTexture() const { return _frontTexture; }
-    inline GLuint backTexture() const { return _backTexture; }
-
-private:
-    GLuint _frontTexture;
-    GLuint _backTexture;
-};
+        private:
+    };
+}
 
 #endif
