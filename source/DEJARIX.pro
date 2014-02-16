@@ -31,8 +31,7 @@ SOURCES += main.cpp\
     BasicBuilder.cpp \
     BasicProgram.cpp \
     BasicBufferObject.cpp \
-    swccg/CardSequence.cpp \
-    swccg/CardInSequence.cpp
+    swccg/CardSequence.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -52,6 +51,4 @@ HEADERS  += MainWindow.hpp \
     MenuRingItem.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
-    BasicBufferObject.hpp \
-    swccg/CardSequence.hpp \
-    swccg/CardInSequence.hpp
+    BasicBufferObject.hpp

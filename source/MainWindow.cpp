@@ -1,6 +1,28 @@
 #include "MainWindow.hpp"
+#include "swccg/Card.hpp"
 #include <QKeyEvent>
 #include <QDir>
+
+static void testCards()
+{
+    const int CardCount = 16;
+    StarWarsCCG::Card cards[CardCount];
+
+    StarWarsCCG::CardSequence sequence;
+
+    for (int i = 0; i < CardCount; ++i)
+        sequence.addToFront(cards[i]);
+
+    qDebug() << "Before Shuffle";
+    sequence.testDump();
+
+    qDebug() << "During Shuffle";
+    std::mt19937_64 generator;
+    sequence.shuffle(generator);
+
+    qDebug() << "After Shuffle";
+    sequence.testDump();
+}
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
@@ -9,6 +31,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     QDir::setCurrent("../../..");
     qDebug() << QDir::currentPath();
 #endif
+
+    testCards();
 
     _mainWidget = new MainWidget(this);
     _isFullscreen = false;
