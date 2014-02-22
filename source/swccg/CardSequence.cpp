@@ -62,6 +62,22 @@ namespace StarWarsCCG
         }
     }
 
+    Card* CardSequence::removeFront()
+    {
+        Card* result = _firstCard;
+
+        if (result)
+        {
+            _firstCard = _firstCard->_nextSibling;
+            if (_firstCard) _firstCard->_previousSibling = nullptr;
+
+            result->_parentSequence = nullptr;
+            result->_nextSibling = nullptr;
+        }
+
+        return result;
+    }
+
     int CardSequence::count() const
     {
         int result = 0;

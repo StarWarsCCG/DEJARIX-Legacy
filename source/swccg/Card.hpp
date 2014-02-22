@@ -1,33 +1,13 @@
 #ifndef CARD_HPP
 #define CARD_HPP
 
+#include "CardSequence.hpp"
 #include <QVector>
 #include <QDebug>
 #include <random>
 
 namespace StarWarsCCG
 {
-    class Card;
-
-    class CardSequence
-    {
-    public:
-        CardSequence();
-        ~CardSequence();
-
-        void addToBack(Card& card);
-        void addToFront(Card& card);
-        void remove(Card& card);
-        int count() const;
-
-        void testDump() const;
-
-        template<class T> void shuffle(T& generator);
-
-    private:
-        Card* _firstCard;
-    };
-
     class Card
     {
     public:
@@ -57,9 +37,9 @@ namespace StarWarsCCG
     };
 
     template<class T>
-    void CardSequence::shuffle(T& generator)
+    void shuffle(CardSequence& sequence, T& generator)
     {
-        int cardCount = count();
+        int cardCount = sequence.count();
         qDebug() << "Card Count" << cardCount;
 
         if (cardCount > 1)
@@ -67,23 +47,19 @@ namespace StarWarsCCG
             QVector<Card*> cards;
             cards.reserve(cardCount);
 
-            while (_firstCard)
-            {
-                cards.append(_firstCard);
-                remove(*_firstCard);
-            }
+            while (Card* card = sequence.removeFront()) cards.append(card);
 
             int last = cardCount - 1;
 
             for (int i = 0; i < last; ++i)
             {
-                std::uniform_int_distribution<int> distribution(i + 1, last);
+                std::uniform_int_distribution<int> distribution(i, last);
                 int target = distribution(generator);
                 qSwap(cards[i], cards[target]);
             }
 
             for (auto card : cards)
-                addToFront(*card);
+                sequence.addToFront(*card);
         }
     }
 }

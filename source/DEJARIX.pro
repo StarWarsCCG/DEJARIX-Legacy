@@ -51,4 +51,5 @@ HEADERS  += MainWindow.hpp \
     MenuRingItem.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
-    BasicBufferObject.hpp
+    BasicBufferObject.hpp \
+    swccg/CardSequence.hpp

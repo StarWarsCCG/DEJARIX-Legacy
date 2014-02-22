@@ -18,7 +18,7 @@ static void testCards()
 
     qDebug() << "During Shuffle";
     std::mt19937_64 generator;
-    sequence.shuffle(generator);
+    StarWarsCCG::shuffle(sequence, generator);
 
     qDebug() << "After Shuffle";
     sequence.testDump();
