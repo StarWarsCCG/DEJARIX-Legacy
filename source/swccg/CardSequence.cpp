@@ -5,11 +5,40 @@ namespace StarWarsCCG
 {
     CardSequence::CardSequence()
         : _firstCard(nullptr)
+        , _parentCard(nullptr)
     {
+    }
+
+    CardSequence::CardSequence(CardSequence&& other)
+        : _firstCard(other._firstCard)
+        , _parentCard(nullptr)
+    {
+        other._firstCard = nullptr;
+
+        for (Card* i = _firstCard; i; i = i->_nextSibling)
+            i->_parentSequence = this;
     }
 
     CardSequence::~CardSequence()
     {
+        removeAll();
+    }
+
+    CardSequence& CardSequence::operator=(CardSequence&& other)
+    {
+        if (this != &other)
+        {
+            removeAll();
+
+            _firstCard = other._firstCard;
+
+            other._firstCard = nullptr;
+
+            for (Card* i = _firstCard; i; i = i->_nextSibling)
+                i->_parentSequence = this;
+        }
+
+        return *this;
     }
 
     void CardSequence::addToBack(Card& card)
@@ -58,6 +87,11 @@ namespace StarWarsCCG
         }
 
         return result;
+    }
+
+    void CardSequence::removeAll()
+    {
+        while (removeFront());
     }
 
     int CardSequence::count() const

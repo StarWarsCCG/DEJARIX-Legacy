@@ -10,14 +10,17 @@ namespace StarWarsCCG
         , _nextSibling(nullptr)
     {
         _testId = nextId++;
+        _attachedCards._parentCard = this;
     }
 
     Card::Card(Card&& other)
         : _parentSequence(other._parentSequence)
         , _previousSibling(other._previousSibling)
         , _nextSibling(other._nextSibling)
+        , _attachedCards(std::move(other._attachedCards))
     {
         _testId = nextId++;
+        _attachedCards._parentCard = this;
 
         other._parentSequence = nullptr;
         other._previousSibling = nullptr;
