@@ -44,24 +44,6 @@ namespace StarWarsCCG
             card._nextSibling->_previousSibling = &card;
     }
 
-    void CardSequence::remove(Card& card)
-    {
-        if (card._parentSequence == this)
-        {
-            if (card._previousSibling)
-                card._previousSibling->_nextSibling = card._nextSibling;
-            else
-                _firstCard = card._nextSibling;
-
-            if (card._nextSibling)
-                card._nextSibling->_previousSibling = card._previousSibling;
-
-            card._parentSequence = nullptr;
-            card._nextSibling = nullptr;
-            card._previousSibling = nullptr;
-        }
-    }
-
     Card* CardSequence::removeFront()
     {
         Card* result = _firstCard;

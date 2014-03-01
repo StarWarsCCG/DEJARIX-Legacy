@@ -13,7 +13,6 @@ namespace StarWarsCCG
 
         void addToBack(Card& card);
         void addToFront(Card& card);
-        void remove(Card& card);
         Card* removeFront();
         int count() const;
 
@@ -21,6 +20,8 @@ namespace StarWarsCCG
 
     private:
         Card* _firstCard;
+
+        friend class Card;
     };
 }
 

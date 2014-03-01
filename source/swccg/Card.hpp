@@ -58,8 +58,7 @@ namespace StarWarsCCG
                 qSwap(cards[i], cards[target]);
             }
 
-            for (auto card : cards)
-                sequence.addToFront(*card);
+            for (auto card : cards) sequence.addToFront(*card);
         }
     }
 }

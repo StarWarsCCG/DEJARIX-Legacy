@@ -13,22 +13,69 @@ namespace StarWarsCCG
     }
 
     Card::Card(Card&& other)
+        : _parentSequence(other._parentSequence)
+        , _previousSibling(other._previousSibling)
+        , _nextSibling(other._nextSibling)
     {
-        (void)other;
+        _testId = nextId++;
+
+        other._parentSequence = nullptr;
+        other._previousSibling = nullptr;
+        other._nextSibling = nullptr;
+
+        if (_previousSibling)
+            _previousSibling->_nextSibling = this;
+        else
+            _parentSequence->_firstCard = this;
+
+        if (_nextSibling) _nextSibling->_previousSibling = this;
     }
 
     Card::~Card()
     {
+        remove();
     }
 
     Card& Card::operator=(Card&& other)
     {
-        (void)other;
+        if (this != &other)
+        {
+            remove();
+
+            _parentSequence = other._parentSequence;
+            _previousSibling = other._previousSibling;
+            _nextSibling = other._nextSibling;
+
+            other._parentSequence = nullptr;
+            other._previousSibling = nullptr;
+            other._nextSibling = nullptr;
+
+            if (_previousSibling)
+                _previousSibling->_nextSibling = this;
+            else
+                _parentSequence->_firstCard = this;
+
+            if (_nextSibling) _nextSibling->_previousSibling = this;
+        }
+
         return *this;
     }
 
     void Card::remove()
     {
-        if (_parentSequence) _parentSequence->remove(*this);
+        if (_parentSequence)
+        {
+            if (_previousSibling)
+                _previousSibling->_nextSibling = _nextSibling;
+            else
+                _parentSequence->_firstCard = _nextSibling;
+
+            if (_nextSibling)
+                _nextSibling->_previousSibling = _previousSibling;
+
+            _parentSequence = nullptr;
+            _nextSibling = nullptr;
+            _previousSibling = nullptr;
+        }
     }
 }
