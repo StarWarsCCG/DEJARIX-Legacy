@@ -11,12 +11,18 @@ template<typename T>
 constexpr T tau() { return pi<T>() * T(2); }
 
 template<typename T>
+constexpr T degreesPerRadian() { return T(180) / pi<T>(); }
+
+template<typename T>
+constexpr T radiansPerDegree() { return pi<T>() / T(180); }
+
+template<typename T>
 class Rotation
 {
 public:
     static constexpr const Rotation fromDegrees(T degrees)
     {
-        return Rotation(degrees * pi<T>() / T(180));
+        return Rotation(degrees * radiansPerDegree<T>());
     }
 
     static constexpr const Rotation fromRadians(T radians)
@@ -62,7 +68,7 @@ public:
     }
 
     T toRadians() const { return _radians; }
-    T toDegrees() const { return _radians * T(180) / pi<T>(); }
+    T toDegrees() const { return _radians * degreesPerRadian<T>(); }
 
 private:
     Rotation(T radians) : _radians(radians) {}

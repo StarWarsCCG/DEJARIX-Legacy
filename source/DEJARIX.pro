@@ -23,7 +23,6 @@ SOURCES += main.cpp\
     Animation.cpp \
     TableBuffer.cpp \
     AnimationCollection.cpp \
-    swccg/Card.cpp \
     CardDrawTool.cpp \
     MenuRing.cpp \
     swccg/LocationPopper.cpp \
@@ -31,7 +30,8 @@ SOURCES += main.cpp\
     BasicBuilder.cpp \
     BasicProgram.cpp \
     BasicBufferObject.cpp \
-    swccg/CardSequence.cpp
+    CardInfo.cpp \
+    Card.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -44,7 +44,6 @@ HEADERS  += MainWindow.hpp \
     Animation.hpp \
     TableBuffer.hpp \
     AnimationCollection.hpp \
-    swccg/Card.hpp \
     CardDrawTool.hpp \
     MenuRing.hpp \
     swccg/LocationPopper.hpp \
@@ -52,4 +51,5 @@ HEADERS  += MainWindow.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
     BasicBufferObject.hpp \
-    swccg/CardSequence.hpp
+    CardInfo.hpp \
+    Card.hpp
