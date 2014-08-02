@@ -10,10 +10,10 @@ class CardActor
 {
 public:
     CardActor();
-    CardActor(const CardActor& other);
-    ~CardActor();
+    CardActor(const CardActor&) = default;
+    ~CardActor() = default;
 
-    CardActor& operator=(const CardActor& other);
+    CardActor& operator=(const CardActor&) = default;
 
     void update(const QMatrix4x4& viewMatrix);
     inline const QMatrix4x4& modelViewMatrix() const

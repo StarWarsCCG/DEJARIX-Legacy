@@ -20,18 +20,13 @@ SOURCES += main.cpp\
     CardBuffer.cpp \
     CardActor.cpp \
     Camera.cpp \
-    Animation.cpp \
     TableBuffer.cpp \
-    AnimationCollection.cpp \
     CardDrawTool.cpp \
     MenuRing.cpp \
-    swccg/LocationPopper.cpp \
     MenuRingItem.cpp \
     BasicBuilder.cpp \
     BasicProgram.cpp \
-    BasicBufferObject.cpp \
-    CardInfo.cpp \
-    Card.cpp
+    BasicBufferObject.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -41,15 +36,10 @@ HEADERS  += MainWindow.hpp \
     CardActor.hpp \
     Rotation.hpp \
     Camera.hpp \
-    Animation.hpp \
     TableBuffer.hpp \
-    AnimationCollection.hpp \
     CardDrawTool.hpp \
     MenuRing.hpp \
-    swccg/LocationPopper.hpp \
     MenuRingItem.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
-    BasicBufferObject.hpp \
-    CardInfo.hpp \
-    Card.hpp
+    BasicBufferObject.hpp

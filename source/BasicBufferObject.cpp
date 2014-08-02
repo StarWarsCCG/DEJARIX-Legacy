@@ -22,7 +22,8 @@ BasicBufferObject::BasicBufferObject(BasicBufferObject&& other)
     other._vertexCount = 0;
 }
 
-BasicBufferObject::BasicBufferObject(QOpenGLFunctions& functions,
+BasicBufferObject::BasicBufferObject(
+    QOpenGLFunctions& functions,
     const BasicBuilder& builder)
     : _functions(&functions)
     , _object(0)

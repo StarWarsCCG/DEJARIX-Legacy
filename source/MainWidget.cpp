@@ -12,9 +12,8 @@ MainWidget::MainWidget(QWidget* parent)
     , _cardBuffer(nullptr)
     , _drawTool(nullptr)
     , _tableBuffer(nullptr)
-    , _isCameraMoving(false)
-    , _locationSpan(0.0f)
-    , _mouseMode(MouseMode::None)
+    , _isCameraRotating(false)
+    , _isCameraPanning(false)
 {
     _camera.distance(32.0f);
     _camera.angle(RotationF::fromDegrees(-10.0f));
@@ -56,7 +55,7 @@ void MainWidget::initializeGL()
     _drawTool = new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix);
     _tableBuffer = new TableBuffer(_functions);
 
-    _locationSpan = _cardBuffer->specifications().height()
+    float locationSpan = _cardBuffer->specifications().height()
         + 1.0f / 8.0f;
 
     for (int i = 0; i < 6; ++i)
@@ -67,16 +66,19 @@ void MainWidget::initializeGL()
 
         actor.rotation(RotationF::fromDegrees(90.0f));
 
-        _locationActors.append(actor);
+        _cardActors.append(actor);
     }
 
-    float count = float(_locationActors.size() - 1);
-    float firstX = count * _locationSpan / -2.0f;
+    float count = float(_cardActors.size() - 1);
+    float firstX = count * locationSpan / -2.0f;
 
-    for (int i = 0; i < _locationActors.size(); ++i)
+    for (int i = 0; i < _cardActors.size(); ++i)
     {
-        _locationActors[i].position(QVector3D(firstX + float(i)
-            * _locationSpan, 0.0f, specifications.depth() / 2.0f));
+        _cardActors[i].position(
+            QVector3D(
+                firstX + float(i) * locationSpan,
+                0.0f,
+                specifications.depth() / 2.0f));
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -94,7 +96,7 @@ void MainWidget::resizeGL(int w, int h)
 {
     float ratio = float(w) / float(h);
     _projectionMatrix.setToIdentity();
-    _projectionMatrix.perspective(60.0f, ratio, 1.0f, 1000.0f);
+    _projectionMatrix.perspective(60.0f, ratio, 1.0f, 1024.0f);
     glViewport(0, 0, w, h);
     glGetIntegerv(GL_VIEWPORT, _viewport);
 }
@@ -105,9 +107,9 @@ void MainWidget::paintGL()
 
     _drawTool->bind();
 
-    for (int i = 0; i < _locationActors.size(); ++i)
+    for (int i = 0; i < _cardActors.size(); ++i)
     {
-        _drawTool->draw(_locationActors[i]);
+        _drawTool->draw(_cardActors[i]);
     }
 
     _program->enableTexture(true);
@@ -121,88 +123,32 @@ void MainWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton)
     {
-        _isCameraMoving = true;
+        _isCameraRotating = true;
+        _isCameraPanning = false;
         _mouse = event->pos();
     }
     else if (event->button() == Qt::LeftButton)
     {
-        //QVector3D result = unproject(event->x(), event->y());
-        //qDebug() << result;
-
-        QPoint center(width() / 2, height() / 2);
-        QPoint direction = event->pos() - center;
-        //qDebug() << "center: " << center;
-        //qDebug() << "click: " << event->pos();
-        qDebug() << "direction: " << direction;
-
-        RotationF rotation;
-
-        if (MenuRing::tryGetAngle(direction, 8, rotation))
-        {
-            qDebug() << "result: " << rotation.toDegrees();
-        }
-        else
-        {
-            qDebug() << "too close to origin";
-        }
+        _isCameraPanning = true;
+        _isCameraRotating = false;
+        _mouse = event->pos();
     }
 }
 
 void MainWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton)
-        _isCameraMoving = false;
+        _isCameraRotating = false;
+    else if (event->button() == Qt::LeftButton)
+        _isCameraPanning = false;
 }
 
 void MainWidget::mouseMoveEvent(QMouseEvent* event)
 {
     QVector3D mousePosition = unproject(event->pos());
-    float radius = _locationSpan / 2.0f;
+    (void)mousePosition;
 
-    if (_mouseMode == MouseMode::None)
-    {
-        if (mousePosition.y() > -radius && mousePosition.y() < radius)
-        {
-            _mouseMode = MouseMode::InsertLocation;
-        }
-    }
-
-    if (_mouseMode == MouseMode::InsertLocation)
-    {
-        if (mousePosition.y() <= -radius || mousePosition.y() >= radius)
-        {
-            _locationTarget = 0xdeadbeef;
-            _locationPopper.clear();
-            _mouseMode = MouseMode::None;
-        }
-        else
-        {
-            float locationsSpan = float(_locationActors.size())
-                * _locationSpan;
-            float region = locationsSpan + mousePosition.x() * 2.0f;
-            int halfRegionCount = int(region / _locationSpan) + 1;
-            int locationTarget = halfRegionCount / 2 - 1;
-
-            if (locationTarget >= -1 && locationTarget < _locationActors.size()
-                && locationTarget != _locationTarget)
-            {
-                _locationTarget = locationTarget;
-
-                CardActor* a = nullptr;
-                CardActor* b = nullptr;
-
-                if (_locationTarget > -1)
-                    a = _locationActors.data() + _locationTarget;
-
-                if (_locationTarget < _locationActors.size() - 1)
-                    b = _locationActors.data() + _locationTarget + 1;
-
-                _locationPopper.set(a, b);
-            }
-        }
-    }
-
-    if (_isCameraMoving)
+    if (_isCameraRotating)
     {
         QPoint delta = event->pos() - _mouse;
 
@@ -221,14 +167,12 @@ void MainWidget::wheelEvent(QWheelEvent* event)
 
 void MainWidget::onTimer()
 {
-    _animations.updateAll();
-
     _viewMatrix.setToIdentity();
     _camera.apply(_viewMatrix);
 
-    for (int i = 0; i < _locationActors.size(); ++i)
+    for (auto& actor : _cardActors)
     {
-        _locationActors[i].update(_viewMatrix);
+        actor.update(_viewMatrix);
     }
 
     updateGL();
@@ -287,11 +231,11 @@ QVector3D MainWidget::unproject(QPoint pixel)
     GLfloat depthSample;
     glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depthSample);
 
-    QVector4D v;
-    v.setX(float(x - _viewport[0]) * 2.0f / float(_viewport[2]) - 1.0f);
-    v.setY(float(y - _viewport[1]) * 2.0f / float(_viewport[3]) - 1.0f);
-    v.setZ(2.0f * depthSample - 1.0f);
-    v.setW(1.0f);
+    QVector4D v(
+        float(x - _viewport[0]) * 2.0f / float(_viewport[2]) - 1.0f,
+        float(y - _viewport[1]) * 2.0f / float(_viewport[3]) - 1.0f,
+        2.0f * depthSample - 1.0f,
+        1.0f);
 
     QMatrix4x4 modelViewProjectionMatrix = _projectionMatrix
         * _viewMatrix;

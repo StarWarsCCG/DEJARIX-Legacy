@@ -5,19 +5,12 @@
 #include "CardDrawTool.hpp"
 #include "TableBuffer.hpp"
 #include "BasicProgram.hpp"
-#include "AnimationCollection.hpp"
-#include "swccg/LocationPopper.hpp"
 #include <QWidget>
 #include <QGLWidget>
 #include <QOpenGLFunctions>
 #include <QImage>
 #include <QVector>
 #include <QPoint>
-
-namespace MouseMode
-{
-    enum Mode { None, InsertLocation };
-}
 
 class MainWidget : public QGLWidget
 {
@@ -53,21 +46,17 @@ private:
     CardDrawTool* _drawTool;
     TableBuffer* _tableBuffer;
 
-    AnimationCollection _animations;
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
     GLuint _tableTexture;
     Camera _camera;
     QMatrix4x4 _viewMatrix;
-    bool _isCameraMoving;
+    bool _isCameraRotating;
+    bool _isCameraPanning;
     QPoint _mouse;
 
     GLuint _textures[2];
-    QVector<CardActor> _locationActors;
-    float _locationSpan;
-    MouseMode::Mode _mouseMode;
-    LocationPopper _locationPopper;
-    int _locationTarget;
+    QVector<CardActor> _cardActors;
 };
 
 #endif
