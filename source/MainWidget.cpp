@@ -8,10 +8,6 @@
 
 MainWidget::MainWidget(QWidget* parent)
     : QGLWidget(parent)
-    , _program(nullptr)
-    , _cardBuffer(nullptr)
-    , _drawTool(nullptr)
-    , _tableBuffer(nullptr)
     , _isCameraRotating(false)
     , _isCameraPanning(false)
 {
@@ -27,10 +23,6 @@ MainWidget::~MainWidget()
     deleteTexture(_textures[1]);
     deleteTexture(_textures[0]);
     deleteTexture(_tableTexture);
-    delete _drawTool;
-    delete _tableBuffer;
-    delete _cardBuffer;
-    delete _program;
 }
 
 void MainWidget::initializeGL()
@@ -41,7 +33,7 @@ void MainWidget::initializeGL()
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
-    _program = new BasicProgram(_functions);
+    _program = std::unique_ptr<BasicProgram>(new BasicProgram(_functions));
 
     _tableTexture = loadImage(QImage("../wood.jpg"));
     //_tableTexture = loadText("DEJARIX");
@@ -51,9 +43,10 @@ void MainWidget::initializeGL()
 
     CardSpecifications specifications;
     CardBuilder builder(specifications);
-    _cardBuffer = new CardBuffer(builder);
-    _drawTool = new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix);
-    _tableBuffer = new TableBuffer(_functions);
+    _cardBuffer = std::unique_ptr<CardBuffer>(new CardBuffer(builder));
+    _drawTool = std::unique_ptr<CardDrawTool>(
+        new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
+    _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(_functions));
 
     float locationSpan = _cardBuffer->specifications().height()
         + 1.0f / 8.0f;
@@ -66,13 +59,13 @@ void MainWidget::initializeGL()
 
         actor.rotation(RotationF::fromDegrees(90.0f));
 
-        _cardActors.append(actor);
+        _cardActors.push_back(actor);
     }
 
     float count = float(_cardActors.size() - 1);
     float firstX = count * locationSpan / -2.0f;
 
-    for (int i = 0; i < _cardActors.size(); ++i)
+    for (std::size_t i = 0; i < _cardActors.size(); ++i)
     {
         _cardActors[i].position(
             QVector3D(
@@ -107,7 +100,7 @@ void MainWidget::paintGL()
 
     _drawTool->bind();
 
-    for (int i = 0; i < _cardActors.size(); ++i)
+    for (std::size_t i = 0; i < _cardActors.size(); ++i)
     {
         _drawTool->draw(_cardActors[i]);
     }

@@ -9,8 +9,9 @@
 #include <QGLWidget>
 #include <QOpenGLFunctions>
 #include <QImage>
-#include <QVector>
 #include <QPoint>
+#include <vector>
+#include <memory>
 
 class MainWidget : public QGLWidget
 {
@@ -41,10 +42,10 @@ private:
     QVector3D unproject(QPoint pixel);
 
     QOpenGLFunctions _functions;
-    BasicProgram* _program;
-    CardBuffer* _cardBuffer;
-    CardDrawTool* _drawTool;
-    TableBuffer* _tableBuffer;
+    std::unique_ptr<BasicProgram> _program;
+    std::unique_ptr<CardBuffer> _cardBuffer;
+    std::unique_ptr<CardDrawTool> _drawTool;
+    std::unique_ptr<TableBuffer> _tableBuffer;
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
@@ -56,7 +57,7 @@ private:
     QPoint _mouse;
 
     GLuint _textures[2];
-    QVector<CardActor> _cardActors;
+    std::vector<CardActor> _cardActors;
 };
 
 #endif

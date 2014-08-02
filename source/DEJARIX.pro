@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     MenuRingItem.cpp \
     BasicBuilder.cpp \
     BasicProgram.cpp \
-    BasicBufferObject.cpp
+    BasicBufferObject.cpp \
+    TextureManager.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -42,4 +43,5 @@ HEADERS  += MainWindow.hpp \
     MenuRingItem.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
-    BasicBufferObject.hpp
+    BasicBufferObject.hpp \
+    TextureManager.hpp
