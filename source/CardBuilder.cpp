@@ -4,20 +4,20 @@
 CardBuilder::CardBuilder(const CardSpecifications& specifications)
     : _specifications(specifications)
 {
-    float w = _specifications.width() / 2.0f;
-    float h = _specifications.height() / 2.0f;
-    float cr = _specifications.cornerRadius();
-    int cd = _specifications.cornerDetail();
+    float w = _specifications.width / 2.0f;
+    float h = _specifications.height / 2.0f;
+    float cr = _specifications.cornerRadius;
+    int cd = _specifications.cornerDetail;
 
     int vertexCount = 8 * cd + 16;
     _vertices.reserve(vertexCount * 3);
     _textureCoordinates.reserve(vertexCount * 2);
 
     // upper left corner
-    addVertex(cr - w, h - cr, cr / _specifications.width(),
-        cr / _specifications.height());
+    addVertex(cr - w, h - cr, cr / _specifications.width,
+        cr / _specifications.height);
 
-    addVertex(-w, h - cr, 0.0f, cr / _specifications.height());
+    addVertex(-w, h - cr, 0.0f, cr / _specifications.height);
 
     float theta = 90.0f / float(cd);
     for (int i = 1; i < cd; ++i)
@@ -27,11 +27,11 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
         float dy = cr * sin(radians);
 
         addVertex(cr - w - dx, h  - cr + dy,
-            (cr - dx) / _specifications.width(),
-            (cr - dy) / _specifications.height());
+            (cr - dx) / _specifications.width,
+            (cr - dy) / _specifications.height);
     }
 
-    addVertex(cr - w, h, cr / _specifications.width(), 0.0f);
+    addVertex(cr - w, h, cr / _specifications.width, 0.0f);
 
     // upper right corner
     addVertex(-_vertices[0], _vertices[1],
@@ -165,7 +165,7 @@ BasicBufferObject CardBuilder::bufferObject(QOpenGLFunctions& functions) const
 
 void CardBuilder::addVertex(float x, float y, float s, float t)
 {
-    float d = _specifications.depth() / 2.0f;
+    float d = _specifications.depth / 2.0f;
 
     _vertices.append(x);
     _vertices.append(y);

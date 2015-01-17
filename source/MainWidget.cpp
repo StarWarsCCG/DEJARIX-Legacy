@@ -48,16 +48,16 @@ void MainWidget::initializeGL()
         new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
     _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(_functions));
 
-    float locationSpan = _cardBuffer->specifications().height()
+    float locationSpan = _cardBuffer->specifications().height
         + 1.0f / 8.0f;
 
     for (int i = 0; i < 6; ++i)
     {
         CardActor actor;
-        actor.topTexture(_textures[0]);
-        actor.bottomTexture(_textures[1]);
+        actor.topTexture = _textures[0];
+        actor.bottomTexture = _textures[1];
 
-        actor.rotation(RotationF::fromDegrees(90.0f));
+        actor.rotation = RotationF::fromDegrees(90.0f);
 
         _cardActors.push_back(actor);
     }
@@ -67,11 +67,11 @@ void MainWidget::initializeGL()
 
     for (std::size_t i = 0; i < _cardActors.size(); ++i)
     {
-        _cardActors[i].position(
+        _cardActors[i].position =
             QVector3D(
                 firstX + float(i) * locationSpan,
                 0.0f,
-                specifications.depth() / 2.0f));
+                specifications.depth / 2.0f);
     }
 
     glEnable(GL_DEPTH_TEST);

@@ -15,7 +15,6 @@ CONFIG += c++11
 SOURCES += main.cpp\
         MainWindow.cpp \
     MainWidget.cpp \
-    CardSpecifications.cpp \
     CardBuilder.cpp \
     CardBuffer.cpp \
     CardActor.cpp \
