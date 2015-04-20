@@ -21,17 +21,14 @@ public:
     void drawBottom();
 
 private:
-    static const int BufferCount = 3;
-    static const int TopIndex = 0;
-    static const int MiddleIndex = 1;
-    static const int BottomIndex = 2;
-
     CardSpecifications _specifications;
     BasicBufferObject _object;
-    GLuint _buffers[BufferCount];
+    GLuint _indexBuffer;
     GLsizei _topCount;
     GLsizei _middleCount;
     GLsizei _bottomCount;
+    GLushort* _middleOffset;
+    GLushort* _bottomOffset;
 };
 
 #endif
