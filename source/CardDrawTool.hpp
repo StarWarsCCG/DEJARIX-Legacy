@@ -9,7 +9,9 @@
 class CardDrawTool
 {
 public:
-    CardDrawTool(BasicProgram& program, CardBuffer& buffer,
+    CardDrawTool(
+        BasicProgram& program,
+        CardBuffer& buffer,
         QMatrix4x4& projectionMatrix);
     ~CardDrawTool();
 

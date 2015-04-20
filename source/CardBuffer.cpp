@@ -11,21 +11,24 @@ CardBuffer::CardBuffer(const CardBuilder& builder)
 
     _topCount = builder.topIndices().size();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffers[TopIndex]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
         _topCount * sizeof(GLushort),
         builder.topIndices().constData(),
         GL_STATIC_DRAW);
 
     _middleCount = builder.middleIndices().size();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffers[MiddleIndex]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
         _middleCount * sizeof(GLushort),
         builder.middleIndices().constData(),
         GL_STATIC_DRAW);
 
     _bottomCount = builder.bottomIndices().size();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffers[BottomIndex]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
         _bottomCount * sizeof(GLushort),
         builder.bottomIndices().constData(),
         GL_STATIC_DRAW);

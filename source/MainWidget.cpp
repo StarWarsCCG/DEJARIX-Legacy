@@ -11,8 +11,8 @@ MainWidget::MainWidget(QWidget* parent)
     , _isCameraRotating(false)
     , _isCameraPanning(false)
 {
-    _camera.distance(32.0f);
-    _camera.angle(RotationF::fromDegrees(-10.0f));
+    _camera.distance = 32.0f;
+    _camera.angle = RotationF::fromDegrees(-10.0f);
     setMouseTracking(true);
 }
 
@@ -145,8 +145,8 @@ void MainWidget::mouseMoveEvent(QMouseEvent* event)
     {
         QPoint delta = event->pos() - _mouse;
 
-        _camera.adjustRotation(RotationF::fromDegrees(float(delta.x()) / 3.0f));
-        _camera.adjustAngle(RotationF::fromDegrees(float(delta.y()) / 3.0f));
+        _camera.rotation += RotationF::fromDegrees(float(delta.x()) / 3.0f);
+        _camera.angle += RotationF::fromDegrees(float(delta.y()) / 3.0f);
 
         _mouse = event->pos();
     }
@@ -155,7 +155,7 @@ void MainWidget::mouseMoveEvent(QMouseEvent* event)
 void MainWidget::wheelEvent(QWheelEvent* event)
 {
     const float Delta = 3.0f;
-    _camera.adjustDistance(event->delta() > 0 ? -Delta : Delta);
+    _camera.distance += event->delta() > 0 ? -Delta : Delta;
 }
 
 void MainWidget::onTimer()

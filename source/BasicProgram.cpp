@@ -31,10 +31,13 @@ BasicProgram::BasicProgram(QOpenGLFunctions& functions)
         "   gl_FragColor = result + highlight;\n"
         "}\n";
 
-    _program.addShaderFromSourceCode(QOpenGLShader::Vertex,
+    _program.addShaderFromSourceCode(
+        QOpenGLShader::Vertex,
         vertexShaderSource);
-    _program.addShaderFromSourceCode(QOpenGLShader::Fragment,
+    _program.addShaderFromSourceCode(
+        QOpenGLShader::Fragment,
         fragmentShaderSource);
+
     _program.link();
     _positionAttribute = _program.attributeLocation("position");
     _textureAttribute = _program.attributeLocation("tc");
