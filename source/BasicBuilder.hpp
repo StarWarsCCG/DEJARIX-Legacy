@@ -19,7 +19,8 @@ public:
 
     void reserve(int vertexCount);
     void add(QVector3D position, QVector2D textureCoordinate);
-    void bufferData(QOpenGLFunctions& functions,
+    void bufferData(
+        QOpenGLFunctions& functions,
         GLenum usage = GL_STATIC_DRAW) const;
 
 private:

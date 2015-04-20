@@ -1,4 +1,5 @@
 #include "CardBuilder.hpp"
+#include "Rotation.hpp"
 #include <cmath>
 
 CardBuilder::CardBuilder(const CardSpecifications& specifications)
@@ -22,11 +23,13 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
     float theta = 90.0f / float(cd);
     for (int i = 1; i < cd; ++i)
     {
-        float radians = float(i) * theta * (3.1415926535898f / 180.0f);
+        float radians = float(i) * theta * radiansPerDegree<float>();
         float dx = cr * cos(radians);
         float dy = cr * sin(radians);
 
-        addVertex(cr - w - dx, h  - cr + dy,
+        addVertex(
+            cr - w - dx,
+            h  - cr + dy,
             (cr - dx) / _specifications.width,
             (cr - dy) / _specifications.height);
     }
@@ -46,7 +49,9 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
 
     for (int i = 0; i <= cd; ++i)
     {
-        addVertex(-_vertices[mirrorVertex], _vertices[mirrorVertex + 1],
+        addVertex(
+            -_vertices[mirrorVertex],
+            _vertices[mirrorVertex + 1],
             1.0f - _textureCoordinates[mirrorTexture],
             _textureCoordinates[mirrorTexture + 1]);
 
@@ -55,7 +60,9 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
     }
 
     // lower right corner
-    addVertex(_vertices[previousVertex], -_vertices[previousVertex + 1],
+    addVertex(
+        _vertices[previousVertex],
+        -_vertices[previousVertex + 1],
         _textureCoordinates[previousTexture],
         1.0f - _textureCoordinates[previousTexture + 1]);
 
@@ -67,7 +74,9 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
 
     for (int i = 0; i <= cd; ++i)
     {
-        addVertex(_vertices[mirrorVertex], -_vertices[mirrorVertex + 1],
+        addVertex(
+            _vertices[mirrorVertex],
+            -_vertices[mirrorVertex + 1],
             _textureCoordinates[mirrorTexture],
             1.0f - _textureCoordinates[mirrorTexture + 1]);
 
@@ -76,7 +85,9 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
     }
 
     // lower left corner
-    addVertex(-_vertices[previousVertex], _vertices[previousVertex + 1],
+    addVertex(
+        -_vertices[previousVertex],
+        _vertices[previousVertex + 1],
         1.0f - _textureCoordinates[previousTexture],
         _textureCoordinates[previousTexture + 1]);
 
@@ -88,7 +99,9 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
 
     for (int i = 0; i <= cd; ++i)
     {
-        addVertex(-_vertices[mirrorVertex], _vertices[mirrorVertex + 1],
+        addVertex(
+            -_vertices[mirrorVertex],
+            _vertices[mirrorVertex + 1],
             1.0f - _textureCoordinates[mirrorTexture],
             _textureCoordinates[mirrorTexture + 1]);
 
@@ -120,15 +133,30 @@ CardBuilder::CardBuilder(const CardSpecifications& specifications)
     for (int i = 0; i < 4; ++i)
     {
         int i4 = (i + 1) % 4;
-        addQuads(corners[i], corners[i + 1] - 2, corners[i4] + 2, corners[i4]);
-        addQuad(corners[i + 1] - 2, corners[i + 1] - 1, corners[i4] + 3,
+        addQuads(
+            corners[i],
+            corners[i + 1] - 2,
+            corners[i4] + 2,
+            corners[i4]);
+
+        addQuad(
+            corners[i + 1] - 2,
+            corners[i + 1] - 1,
+            corners[i4] + 3,
             corners[i4] + 2);
 
         for (int j = 0; j < cd; ++j)
         {
             int k = 2 * (j + 1);
-            addTriangles(corners[i], corners[i] + k, corners[i] + k + 2);
-            addQuad(corners[i] + k, corners[i] + k + 1, corners[i] + k + 3,
+            addTriangles(
+                corners[i],
+                corners[i] + k,
+                corners[i] + k + 2);
+
+            addQuad(
+                corners[i] + k,
+                corners[i] + k + 1,
+                corners[i] + k + 3,
                 corners[i] + k + 2);
         }
     }
@@ -150,11 +178,14 @@ BasicBufferObject CardBuilder::bufferObject(QOpenGLFunctions& functions) const
     for (int i = 0; i < vertexCount; ++i)
     {
         int vi = i * 3;
-        QVector3D vertex(_vertices[vi + 0], _vertices[vi + 1],
+        QVector3D vertex(
+            _vertices[vi + 0],
+            _vertices[vi + 1],
             _vertices[vi + 2]);
 
         int tci = i * 2;
-        QVector2D textureCoordinate(_textureCoordinates[tci + 0],
+        QVector2D textureCoordinate(
+            _textureCoordinates[tci + 0],
             _textureCoordinates[tci + 1]);
 
         builder.add(vertex, textureCoordinate);
