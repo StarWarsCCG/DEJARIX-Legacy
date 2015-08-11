@@ -49,7 +49,7 @@ void MainWidget::initializeGL()
     _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(_functions));
 
     float locationSpan = _cardBuffer->specifications().height
-        + 1.0f / 8.0f;
+        + 1.0f;
 
     for (int i = 0; i < 6; ++i)
     {
@@ -158,8 +158,70 @@ void MainWidget::wheelEvent(QWheelEvent* event)
     _camera.distance += event->delta() > 0 ? -Delta : Delta;
 }
 
+void MainWidget::keyPressEvent(QKeyEvent* event)
+{
+    switch (event->key())
+    {
+    case Qt::Key_A:
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            auto ii = i + 1;
+            const auto& actor = _cardActors[i];
+            auto rotation = actor.rotation.toRadians();
+            _cardRotationAnimations.push_back(
+                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0});
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+}
+
+template<typename T> T Linear(T first, T last, T t)
+{
+    auto difference = last - first;
+    return difference * t + first;
+}
+
+template<typename T> T Overshoot(T first, T last, T magnitude, T t)
+{
+    auto difference = last - first;
+    magnitude *= -difference;
+    return difference * t + first + sin(t * tau<T>()) * magnitude;
+}
+
 void MainWidget::onTimer()
 {
+    auto i = _cardRotationAnimations.begin();
+
+    while (i != _cardRotationAnimations.end())
+    {
+        auto& cfa = *i;
+        auto& actor = _cardActors[cfa.cardId];
+        //actor.position.setZ(4.0f);
+
+        if (cfa.currentStep < cfa.stepCount)
+        {
+            auto t = float(cfa.currentStep++) / float(cfa.stepCount);
+            actor.rotation = RotationF::fromRadians(Overshoot<float>(
+                cfa.first,
+                cfa.last,
+                cfa.magnitude,
+                t));
+
+            ++i;
+        }
+        else
+        {
+            actor.rotation = RotationF::fromRadians(cfa.last);
+            i = _cardRotationAnimations.erase(i);
+            qDebug() << "GONE!";
+        }
+    }
+
     _viewMatrix.setToIdentity();
     _camera.apply(_viewMatrix);
 

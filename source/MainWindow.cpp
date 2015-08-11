@@ -39,6 +39,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         break;
 
     default:
+        _mainWidget->keyPressEvent(event);
         break;
     }
 }

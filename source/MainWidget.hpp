@@ -5,6 +5,7 @@
 #include "CardDrawTool.hpp"
 #include "TableBuffer.hpp"
 #include "BasicProgram.hpp"
+#include "CardFlipAnimation.hpp"
 #include <QWidget>
 #include <QGLWidget>
 #include <QOpenGLFunctions>
@@ -22,6 +23,7 @@ public:
     virtual ~MainWidget();
 
     void dump();
+    virtual void keyPressEvent(QKeyEvent* event);
 
 protected slots:
     void onTimer();
@@ -58,6 +60,7 @@ private:
 
     GLuint _textures[2];
     std::vector<CardActor> _cardActors;
+    std::vector<CardFlipAnimation> _cardRotationAnimations;
 };
 
 #endif
