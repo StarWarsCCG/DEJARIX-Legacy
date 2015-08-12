@@ -7,7 +7,7 @@
 #include <QVector2D>
 
 MainWidget::MainWidget(QWidget* parent)
-    : QGLWidget(parent)
+    : QOpenGLWidget(parent)
     , _isCameraRotating(false)
     , _isCameraPanning(false)
 {
@@ -19,21 +19,17 @@ MainWidget::MainWidget(QWidget* parent)
 MainWidget::~MainWidget()
 {
     _program->close();
-
-    deleteTexture(_textures[1]);
-    deleteTexture(_textures[0]);
-    deleteTexture(_tableTexture);
 }
 
 void MainWidget::initializeGL()
 {
-    _functions.initializeOpenGLFunctions();
+    initializeOpenGLFunctions();
 
     QTimer* timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
-    _program = std::unique_ptr<BasicProgram>(new BasicProgram(_functions));
+    _program = std::unique_ptr<BasicProgram>(new BasicProgram(*this));
 
     _tableTexture = loadImage(QImage("../wood.jpg"));
     //_tableTexture = loadText("DEJARIX");
@@ -46,7 +42,7 @@ void MainWidget::initializeGL()
     _cardBuffer = std::unique_ptr<CardBuffer>(new CardBuffer(builder));
     _drawTool = std::unique_ptr<CardDrawTool>(
         new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
-    _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(_functions));
+    _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(*this));
 
     float locationSpan = _cardBuffer->specifications().height
         + 1.0f;
@@ -54,8 +50,8 @@ void MainWidget::initializeGL()
     for (int i = 0; i < 6; ++i)
     {
         CardActor actor;
-        actor.topTexture = _textures[0];
-        actor.bottomTexture = _textures[1];
+        actor.topTexture = _textures[0]->textureId();
+        actor.bottomTexture = _textures[1]->textureId();
 
         actor.rotation = RotationF::fromDegrees(90.0f);
 
@@ -108,7 +104,7 @@ void MainWidget::paintGL()
     _program->enableTexture(true);
     _program->setMatrix(_projectionMatrix * _viewMatrix);
     _program->setHighlight(QVector4D());
-    glBindTexture(GL_TEXTURE_2D, _tableTexture);
+    _tableTexture->bind();
     _tableBuffer->draw(*_program);
 }
 
@@ -266,13 +262,11 @@ void MainWidget::onTimer()
         actor.update(_viewMatrix);
     }
 
-    updateGL();
+    update();
 }
 
-GLuint MainWidget::loadImage(const QImage& image)
+std::unique_ptr<QOpenGLTexture> MainWidget::loadImage(const QImage& image)
 {
-    GLuint result = 0;
-
     if (image.width() > 0 && image.height() > 0)
     {
         int width = 1;
@@ -283,23 +277,20 @@ GLuint MainWidget::loadImage(const QImage& image)
 
         if (width > image.width() || height > image.height())
         {
-            result = bindTexture(image.scaled(width, height));
+            return std::unique_ptr<QOpenGLTexture>(
+                new QOpenGLTexture(image.scaled(width, height)));
         }
         else
         {
-            result = bindTexture(image);
+            return std::unique_ptr<QOpenGLTexture>(new QOpenGLTexture(image));
         }
-
-        _functions.glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    return result;
+    return std::unique_ptr<QOpenGLTexture>();
 }
 
-GLuint MainWidget::loadText(const QString& text)
+std::unique_ptr<QOpenGLTexture> MainWidget::loadText(const QString& text)
 {
-    GLuint result = 0;
-
     QFont font("../DejaVuSans.ttf");
     font.setPixelSize(64);
     QImage image(256, 256, QImage::Format_ARGB32);
@@ -309,9 +300,7 @@ GLuint MainWidget::loadText(const QString& text)
     painter.setFont(font);
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
-    result = loadImage(image);
-
-    return result;
+    return loadImage(image);
 }
 
 QVector3D MainWidget::unproject(QPoint pixel)

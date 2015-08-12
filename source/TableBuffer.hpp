@@ -13,6 +13,7 @@ public:
 
 private:
     BasicBufferObject _object;
+    QOpenGLFunctions& _functions;
 };
 
 #endif

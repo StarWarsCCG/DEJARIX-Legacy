@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui widgets
 
 TARGET = DEJARIX
 TEMPLATE = app
@@ -21,8 +19,6 @@ SOURCES += main.cpp\
     Camera.cpp \
     TableBuffer.cpp \
     CardDrawTool.cpp \
-    MenuRing.cpp \
-    MenuRingItem.cpp \
     BasicBuilder.cpp \
     BasicProgram.cpp \
     BasicBufferObject.cpp \
@@ -38,8 +34,6 @@ HEADERS  += MainWindow.hpp \
     Camera.hpp \
     TableBuffer.hpp \
     CardDrawTool.hpp \
-    MenuRing.hpp \
-    MenuRingItem.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
     BasicBufferObject.hpp \

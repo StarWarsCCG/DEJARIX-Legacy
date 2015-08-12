@@ -2,6 +2,7 @@
 #include <QDebug>
 
 TableBuffer::TableBuffer(QOpenGLFunctions& functions)
+    : _functions(functions)
 {
     BasicBuilder builder;
 
@@ -23,5 +24,5 @@ TableBuffer::~TableBuffer()
 void TableBuffer::draw(const BasicProgram& program)
 {
     _object.bind(program);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, _object.vertexCount());
+    _functions.glDrawArrays(GL_TRIANGLE_FAN, 0, _object.vertexCount());
 }

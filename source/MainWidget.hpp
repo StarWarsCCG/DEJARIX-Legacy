@@ -7,14 +7,15 @@
 #include "BasicProgram.hpp"
 #include "CardFlipAnimation.hpp"
 #include <QWidget>
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QOpenGLTexture>
 #include <QImage>
 #include <QPoint>
 #include <vector>
 #include <memory>
 
-class MainWidget : public QGLWidget
+class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 
@@ -39,11 +40,10 @@ protected:
     virtual void wheelEvent(QWheelEvent* event);
 
 private:
-    GLuint loadImage(const QImage& image);
-    GLuint loadText(const QString& text);
+    std::unique_ptr<QOpenGLTexture> loadImage(const QImage& image);
+    std::unique_ptr<QOpenGLTexture> loadText(const QString& text);
     QVector3D unproject(QPoint pixel);
 
-    QOpenGLFunctions _functions;
     std::unique_ptr<BasicProgram> _program;
     std::unique_ptr<CardBuffer> _cardBuffer;
     std::unique_ptr<CardDrawTool> _drawTool;
@@ -51,14 +51,14 @@ private:
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
-    GLuint _tableTexture;
+    std::unique_ptr<QOpenGLTexture> _tableTexture;
     Camera _camera;
     QMatrix4x4 _viewMatrix;
     bool _isCameraRotating;
     bool _isCameraPanning;
     QPoint _mouse;
 
-    GLuint _textures[2];
+    std::unique_ptr<QOpenGLTexture> _textures[2];
     std::vector<CardActor> _cardActors;
     std::vector<CardFlipAnimation> _cardRotationAnimations;
 };

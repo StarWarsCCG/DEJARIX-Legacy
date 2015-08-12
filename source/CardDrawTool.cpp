@@ -1,7 +1,9 @@
 #include "CardDrawTool.hpp"
 #include <QDebug>
 
-CardDrawTool::CardDrawTool(BasicProgram& program, CardBuffer& buffer,
+CardDrawTool::CardDrawTool(
+    BasicProgram& program,
+    CardBuffer& buffer,
     QMatrix4x4& projectionMatrix)
     : _program(program),
     _buffer(buffer),
@@ -28,12 +30,12 @@ void CardDrawTool::draw(const CardActor& actor)
 
     if (actor.isTopVisible)
     {
-        glBindTexture(GL_TEXTURE_2D, actor.topTexture);
+        _program._functions.glBindTexture(GL_TEXTURE_2D, actor.topTexture);
         _buffer.drawTop();
     }
     else
     {
-        glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
+        _program._functions.glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
         _buffer.drawBottom();
     }
 }

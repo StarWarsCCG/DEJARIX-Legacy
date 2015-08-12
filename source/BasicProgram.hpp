@@ -31,6 +31,8 @@ private:
     GLuint _textureUniform;
     GLuint _highlightUniform;
     GLuint _enableTextureUniform;
+
+    friend class CardDrawTool;
 };
 
 #endif
