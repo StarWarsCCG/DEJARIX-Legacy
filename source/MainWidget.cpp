@@ -1,5 +1,4 @@
 #include "MainWidget.hpp"
-#include "MenuRing.hpp"
 #include <QDebug>
 #include <QMouseEvent>
 #include <QTimer>
@@ -278,7 +277,13 @@ std::unique_ptr<QOpenGLTexture> MainWidget::loadImage(const QImage& image)
         if (width > image.width() || height > image.height())
         {
             return std::unique_ptr<QOpenGLTexture>(
-                new QOpenGLTexture(image.scaled(width, height)));
+                new QOpenGLTexture(
+                    image.scaled(width, height).mirrored(true, false)));
+
+            // When I switched to QOpenGLTexture, all images flipped horizontally.
+            // The image is being mirrored here to fix that, but I need to figure
+            // out why they are flipping in the first place. Also, the images look
+            // blurrier than before.
         }
         else
         {

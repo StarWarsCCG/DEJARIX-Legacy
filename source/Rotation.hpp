@@ -20,12 +20,12 @@ template<typename T>
 class Rotation
 {
 public:
-    static constexpr const Rotation fromDegrees(T degrees)
+    static constexpr Rotation fromDegrees(T degrees)
     {
         return Rotation(degrees * radiansPerDegree<T>());
     }
 
-    static constexpr const Rotation fromRadians(T radians)
+    static constexpr Rotation fromRadians(T radians)
     {
         return Rotation(radians);
     }
@@ -36,14 +36,10 @@ public:
     }
 
     constexpr Rotation() : _radians(0) {}
-    constexpr Rotation(const Rotation& other) : _radians(other._radians) {}
+    constexpr Rotation(const Rotation&) = default;
     ~Rotation() = default;
 
-    Rotation<T>& operator=(const Rotation<T>& other)
-    {
-        _radians = other._radians;
-        return *this;
-    }
+    Rotation<T>& operator=(const Rotation<T>& other) = default;
 
     Rotation<T>& operator+=(const Rotation<T>& other)
     {
