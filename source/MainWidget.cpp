@@ -164,13 +164,43 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
     {
     case Qt::Key_A:
     {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
         {
             auto ii = i + 1;
             const auto& actor = _cardActors[i];
             auto rotation = actor.rotation.toRadians();
+            auto flip = actor.flip.toRadians();
             _cardRotationAnimations.push_back(
-                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0});
+                { i, rotation, rotation + pi<float>(), flip, flip, 0.125f * ii, 60, 0});
+        }
+        break;
+    }
+
+    case Qt::Key_S:
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            auto ii = i + 1;
+            const auto& actor = _cardActors[i];
+            auto rotation = actor.rotation.toRadians();
+            auto flip = actor.flip.toRadians();
+            _cardRotationAnimations.push_back(
+                { i, rotation, rotation - pi<float>(), flip, flip, 0.25f, ii * 15, 0});
+        }
+        break;
+    }
+
+    case Qt::Key_D:
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            auto ii = i + 1;
+            auto& actor = _cardActors[i];
+            actor.position.setZ(4.0f);
+            auto rotation = actor.rotation.toRadians();
+            auto flip = actor.flip.toRadians();
+            _cardRotationAnimations.push_back(
+                { i, rotation, rotation, flip, flip + pi<float>(), 0.25f, ii * 15, 0});
         }
         break;
     }
@@ -207,8 +237,14 @@ void MainWidget::onTimer()
         {
             auto t = float(cfa.currentStep++) / float(cfa.stepCount);
             actor.rotation = RotationF::fromRadians(Overshoot<float>(
-                cfa.first,
-                cfa.last,
+                cfa.firstRotation,
+                cfa.lastRotation,
+                cfa.magnitude,
+                t));
+
+            actor.flip = RotationF::fromRadians(Overshoot<float>(
+                cfa.firstFlip,
+                cfa.lastFlip,
                 cfa.magnitude,
                 t));
 
@@ -216,9 +252,9 @@ void MainWidget::onTimer()
         }
         else
         {
-            actor.rotation = RotationF::fromRadians(cfa.last);
+            actor.rotation = RotationF::fromRadians(cfa.lastRotation);
+            actor.flip = RotationF::fromRadians(cfa.lastFlip);
             i = _cardRotationAnimations.erase(i);
-            qDebug() << "GONE!";
         }
     }
 

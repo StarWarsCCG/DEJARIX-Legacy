@@ -4,8 +4,10 @@
 struct CardFlipAnimation
 {
     int cardId;
-    float first;
-    float last;
+    float firstRotation;
+    float lastRotation;
+    float firstFlip;
+    float lastFlip;
     float magnitude;
     int stepCount;
     int currentStep;
