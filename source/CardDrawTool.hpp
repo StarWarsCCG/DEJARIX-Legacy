@@ -16,7 +16,7 @@ public:
     ~CardDrawTool();
 
     void bind();
-    void draw(CardActor& actor);
+    void draw(const CardActor& actor);
 
 private:
     CardDrawTool(const CardDrawTool& other);

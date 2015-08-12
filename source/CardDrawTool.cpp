@@ -18,7 +18,7 @@ void CardDrawTool::bind()
     _buffer.bind(_program);
 }
 
-void CardDrawTool::draw(CardActor& actor)
+void CardDrawTool::draw(const CardActor& actor)
 {
     _program.setMatrix(_projectionMatrix * actor.modelViewMatrix);
     _program.setHighlight(actor.highlight);
