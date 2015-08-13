@@ -10,8 +10,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     qDebug() << QDir::currentPath();
 #endif
 
-    _isFullscreen = false;
-
     setCentralWidget(&_mainWidget);
     setWindowTitle("DEJARIX");
     resize(1024, 768);
@@ -51,14 +49,8 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
 
 void MainWindow::toggleFullscreen()
 {
-    _isFullscreen = !_isFullscreen;
-
-    if (_isFullscreen)
-    {
-        showFullScreen();
-    }
-    else
-    {
+    if (isFullScreen())
         showNormal();
-    }
+    else
+        showFullScreen();
 }

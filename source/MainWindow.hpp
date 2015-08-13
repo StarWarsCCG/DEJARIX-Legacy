@@ -20,7 +20,6 @@ private:
     void toggleFullscreen();
 
     MainWidget _mainWidget;
-    bool _isFullscreen;
 };
 
 #endif
