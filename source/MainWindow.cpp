@@ -24,7 +24,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     switch (event->key())
     {
     case Qt::Key_F11:
-        toggleFullscreen();
+    case Qt::Key_Backslash:
+        if (isFullScreen())
+            showNormal();
+        else
+            showFullScreen();
+
         break;
 
     case Qt::Key_Escape:
@@ -45,12 +50,4 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
 {
     (void)event;
     //qDebug() << "context";
-}
-
-void MainWindow::toggleFullscreen()
-{
-    if (isFullScreen())
-        showNormal();
-    else
-        showFullScreen();
 }

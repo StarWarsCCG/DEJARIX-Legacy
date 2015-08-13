@@ -17,8 +17,6 @@ protected:
     virtual void contextMenuEvent(QContextMenuEvent* event);
 
 private:
-    void toggleFullscreen();
-
     MainWidget _mainWidget;
 };
 
