@@ -10,12 +10,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     qDebug() << QDir::currentPath();
 #endif
 
-    _mainWidget = new MainWidget(this);
     _isFullscreen = false;
 
-    setCentralWidget(_mainWidget);
+    setCentralWidget(&_mainWidget);
     setWindowTitle("DEJARIX");
-    resize(800, 600);
+    resize(1024, 768);
 }
 
 MainWindow::~MainWindow()
@@ -35,11 +34,11 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         break;
 
     case Qt::Key_Space:
-        _mainWidget->dump();
+        _mainWidget.dump();
         break;
 
     default:
-        _mainWidget->keyPressEvent(event);
+        _mainWidget.keyPressEvent(event);
         break;
     }
 }

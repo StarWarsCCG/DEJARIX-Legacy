@@ -17,6 +17,7 @@ MainWidget::MainWidget(QWidget* parent)
 
 MainWidget::~MainWidget()
 {
+    makeCurrent();
     _program->close();
 }
 
@@ -52,7 +53,7 @@ void MainWidget::initializeGL()
         actor.topTexture = _textures[0]->textureId();
         actor.bottomTexture = _textures[1]->textureId();
 
-        actor.rotation = RotationF::fromDegrees(90.0f);
+        //actor.rotation = RotationF::fromDegrees(90.0f);
 
         _cardActors.push_back(actor);
     }
@@ -276,14 +277,17 @@ std::unique_ptr<QOpenGLTexture> MainWidget::loadImage(const QImage& image)
 
         if (width > image.width() || height > image.height())
         {
-            return std::unique_ptr<QOpenGLTexture>(
-                new QOpenGLTexture(
-                    image.scaled(width, height).mirrored(true, false)));
+            // http://doc.qt.io/qt-5/qopengltexture.html#details
+            // Qt flips the images vertically... on purpose... *sigh*
 
-            // When I switched to QOpenGLTexture, all images flipped horizontally.
-            // The image is being mirrored here to fix that, but I need to figure
-            // out why they are flipping in the first place. Also, the images look
-            // blurrier than before.
+            auto texture = new QOpenGLTexture(
+                image.scaled(width, height).mirrored(false, true),
+                QOpenGLTexture::MipMapGeneration::GenerateMipMaps);
+
+            texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+            texture->setMagnificationFilter(QOpenGLTexture::Linear);
+
+            return std::unique_ptr<QOpenGLTexture>(texture);
         }
         else
         {

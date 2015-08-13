@@ -19,7 +19,7 @@ protected:
 private:
     void toggleFullscreen();
 
-    MainWidget* _mainWidget;
+    MainWidget _mainWidget;
     bool _isFullscreen;
 };
 
