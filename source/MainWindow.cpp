@@ -33,7 +33,11 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         break;
 
     case Qt::Key_Escape:
-        close();
+        if (isFullScreen())
+            showNormal();
+        else
+            close();
+
         break;
 
     case Qt::Key_Space:
