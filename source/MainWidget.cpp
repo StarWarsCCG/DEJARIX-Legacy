@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QPainter>
 #include <QVector2D>
+#include <QDir>
 
 MainWidget::MainWidget(QWidget* parent)
     : QOpenGLWidget(parent)
@@ -334,4 +335,5 @@ QVector3D MainWidget::unproject(QPoint pixel)
 
 void MainWidget::dump()
 {
+    qDebug() << QDir::homePath();
 }
