@@ -6,6 +6,7 @@
 #include "TableBuffer.hpp"
 #include "BasicProgram.hpp"
 #include "CardFlipAnimation.hpp"
+#include "CardPositionAnimation.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -61,6 +62,7 @@ private:
     std::unique_ptr<QOpenGLTexture> _textures[2];
     std::vector<CardActor> _cardActors;
     std::vector<CardFlipAnimation> _cardRotationAnimations;
+    std::vector<CardPositionAnimation> _cardPositionAnimations;
 };
 
 #endif

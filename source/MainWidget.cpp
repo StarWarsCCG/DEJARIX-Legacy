@@ -202,29 +202,53 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         break;
     }
 
+    case Qt::Key_F:
+    {
+        auto& actor = _cardActors[2];
+        CardPositionAnimation cpa;
+        cpa.cardId = 2;
+        cpa.firstPosition = actor.position;
+        cpa.lastPosition = QVector3D(
+            actor.position.x(),
+            16.0f - actor.position.y(),
+            actor.position.z());
+        cpa.stepCount = 30;
+        cpa.currentStep = 0;
+        _cardPositionAnimations.push_back(cpa);
+
+        break;
+    }
+
     default:
         break;
     }
 }
 
-template<typename T> T Linear(T first, T last, T t)
+template<typename T1, typename T2> T1 Linear(T1 first, T1 last, T2 t)
 {
     auto difference = last - first;
     return difference * t + first;
 }
 
-template<typename T> T Overshoot(T first, T last, T magnitude, T t)
+template<typename T1, typename T2> T1 Overshoot(
+    T1 first, T1 last, T2 magnitude, T2 t)
 {
     auto difference = last - first;
-    magnitude *= -difference;
-    return difference * t + first + sin(t * tau<T>()) * magnitude;
+    auto n = -magnitude * difference;
+    return difference * t + first + sin(t * tau<T2>()) * n;
+}
+
+template<typename T1, typename T2> T1 SCurve(T1 first, T1 last, T2 t)
+{
+    auto difference = last - first;
+    t = (T2(1) - cos(t * pi<T2>())) * T2(0.5);
+    return difference * t + first;
 }
 
 void MainWidget::onTimer()
 {
-    auto i = _cardRotationAnimations.begin();
-
-    while (i != _cardRotationAnimations.end())
+    for (auto i = _cardRotationAnimations.begin();
+         i != _cardRotationAnimations.end();)
     {
         auto& cfa = *i;
         auto& actor = _cardActors[cfa.cardId];
@@ -252,6 +276,26 @@ void MainWidget::onTimer()
             actor.rotation = RotationF::fromRadians(cfa.lastRotation);
             actor.flip = RotationF::fromRadians(cfa.lastFlip);
             i = _cardRotationAnimations.erase(i);
+        }
+    }
+
+    for (auto i = _cardPositionAnimations.begin();
+         i != _cardPositionAnimations.end();)
+    {
+        auto& actor = _cardActors[i->cardId];
+
+        if (i->currentStep < i->stepCount)
+        {
+            auto t = float(i->currentStep++) / float(i->stepCount);
+            //actor.position = Linear(i->firstPosition, i->lastPosition, t);
+            actor.position = SCurve(i->firstPosition, i->lastPosition, t);
+
+            ++i;
+        }
+        else
+        {
+            actor.position = i->lastPosition;
+            i = _cardPositionAnimations.erase(i);
         }
     }
 
