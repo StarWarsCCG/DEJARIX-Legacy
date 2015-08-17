@@ -32,11 +32,11 @@ void MainWidget::initializeGL()
 
     _program = std::unique_ptr<BasicProgram>(new BasicProgram(*this));
 
-    _tableTexture = loadImage(QImage("../wood.jpg"));
     //_tableTexture = loadText("DEJARIX");
 
-    _textures[0] = loadImage(QImage("../localuprising.gif"));
-    _textures[1] = loadImage(QImage("../liberation.gif"));
+    loadImage(QImage("../localuprising.gif"), _textures.allocate());
+    loadImage(QImage("../liberation.gif"), _textures.allocate());
+    loadImage(QImage("../wood.jpg"), _textures.allocate());
 
     CardSpecifications specifications;
     CardBuilder builder(specifications);
@@ -51,8 +51,8 @@ void MainWidget::initializeGL()
     for (int i = 0; i < 6; ++i)
     {
         CardActor actor;
-        actor.topTexture = _textures[0]->textureId();
-        actor.bottomTexture = _textures[1]->textureId();
+        actor.topTexture = _textures[0].textureId();
+        actor.bottomTexture = _textures[1].textureId();
 
         //actor.rotation = RotationF::fromDegrees(90.0f);
 
@@ -97,15 +97,12 @@ void MainWidget::paintGL()
 
     _drawTool->bind();
 
-    for (std::size_t i = 0; i < _cardActors.size(); ++i)
-    {
-        _drawTool->draw(_cardActors[i]);
-    }
+    for (const auto& actor : _cardActors) _drawTool->draw(actor);
 
     _program->enableTexture(true);
     _program->setMatrix(_projectionMatrix * _viewMatrix);
     _program->setHighlight(QVector4D());
-    _tableTexture->bind();
+    _textures[2].bind();
     _tableBuffer->draw(*_program);
 }
 
@@ -167,7 +164,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             const auto& actor = _cardActors[i];
             auto rotation = actor.rotation.toRadians();
             _cardRotationAnimations.push_back(
-                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0});
+                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0 });
         }
         break;
     }
@@ -180,7 +177,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             const auto& actor = _cardActors[i];
             auto rotation = actor.rotation.toRadians();
             _cardRotationAnimations.push_back(
-                { i, rotation, rotation - pi<float>(), 0.25f, ii * 15, 0});
+                { i, rotation, rotation - pi<float>(), 0.25f, ii * 15, 0 });
         }
         break;
     }
@@ -194,7 +191,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             actor.position.setZ(4.0f);
             auto flip = actor.flip.toRadians();
             _cardFlipAnimations.push_back(
-                { i, flip, flip + pi<float>(), 0.25f, ii * 15, 0});
+                { i, flip, flip + pi<float>(), 0.25f, ii * 15, 0 });
         }
         break;
     }
@@ -202,16 +199,12 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
     case Qt::Key_F:
     {
         auto& actor = _cardActors[2];
-        CardPositionAnimation cpa;
-        cpa.cardId = 2;
-        cpa.firstPosition = actor.position;
-        cpa.lastPosition = QVector3D(
+        auto lastPosition = QVector3D(
             actor.position.x(),
             16.0f - actor.position.y(),
             actor.position.z());
-        cpa.stepCount = 30;
-        cpa.currentStep = 0;
-        _cardPositionAnimations.push_back(cpa);
+        _cardPositionAnimations.push_back(
+            { 2, actor.position, lastPosition, 30, 0 });
 
         break;
     }
@@ -231,7 +224,9 @@ template<typename T1, typename T2> T1 Overshoot(
     T1 first, T1 last, T2 magnitude, T2 t)
 {
     auto difference = last - first;
-    return difference * t + first - sin(t * tau<T2>()) * magnitude * difference;
+
+    return
+        difference * t + first - sin(t * tau<T2>()) * magnitude * difference;
 }
 
 template<typename T1, typename T2> T1 SCurve(T1 first, T1 last, T2 t)
@@ -320,7 +315,7 @@ void MainWidget::onTimer()
     update();
 }
 
-std::unique_ptr<QOpenGLTexture> MainWidget::loadImage(const QImage& image)
+void MainWidget::loadImage(const QImage& image, void* target)
 {
     if (image.width() > 0 && image.height() > 0)
     {
@@ -335,25 +330,25 @@ std::unique_ptr<QOpenGLTexture> MainWidget::loadImage(const QImage& image)
             // http://doc.qt.io/qt-5/qopengltexture.html#details
             // Qt flips the images vertically... on purpose... *sigh*
 
-            auto texture = new QOpenGLTexture(
+            auto texture = new (target) QOpenGLTexture(
                 image.scaled(width, height).mirrored(false, true),
                 QOpenGLTexture::MipMapGeneration::GenerateMipMaps);
 
             texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
             texture->setMagnificationFilter(QOpenGLTexture::Linear);
-
-            return std::unique_ptr<QOpenGLTexture>(texture);
         }
         else
         {
-            return std::unique_ptr<QOpenGLTexture>(new QOpenGLTexture(image));
+            new (target) QOpenGLTexture(image);
         }
     }
-
-    return std::unique_ptr<QOpenGLTexture>();
+    else
+    {
+        new (target) QOpenGLTexture(QOpenGLTexture::Target2D);
+    }
 }
 
-std::unique_ptr<QOpenGLTexture> MainWidget::loadText(const QString& text)
+void MainWidget::loadText(const QString& text, void* target)
 {
     QFont font("../DejaVuSans.ttf");
     font.setPixelSize(64);
@@ -364,7 +359,7 @@ std::unique_ptr<QOpenGLTexture> MainWidget::loadText(const QString& text)
     painter.setFont(font);
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
-    return loadImage(image);
+    loadImage(image, target);
 }
 
 QVector3D MainWidget::unproject(QPoint pixel)

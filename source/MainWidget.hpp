@@ -7,6 +7,7 @@
 #include "BasicProgram.hpp"
 #include "CardRotationAnimation.hpp"
 #include "CardPositionAnimation.hpp"
+#include "DeferredArray.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -41,8 +42,8 @@ protected:
     virtual void wheelEvent(QWheelEvent* event);
 
 private:
-    std::unique_ptr<QOpenGLTexture> loadImage(const QImage& image);
-    std::unique_ptr<QOpenGLTexture> loadText(const QString& text);
+    void loadImage(const QImage& image, void *target);
+    void loadText(const QString& text, void* target);
     QVector3D unproject(QPoint pixel);
 
     std::unique_ptr<BasicProgram> _program;
@@ -52,14 +53,13 @@ private:
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
-    std::unique_ptr<QOpenGLTexture> _tableTexture;
     Camera _camera;
     QMatrix4x4 _viewMatrix;
     bool _isCameraRotating;
     bool _isCameraPanning;
     QPoint _mouse;
 
-    std::unique_ptr<QOpenGLTexture> _textures[2];
+    DeferredArray<QOpenGLTexture, 3> _textures;
     std::vector<CardActor> _cardActors;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;

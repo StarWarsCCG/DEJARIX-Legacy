@@ -39,4 +39,5 @@ HEADERS  += MainWindow.hpp \
     BasicBufferObject.hpp \
     TextureManager.hpp \
     CardPositionAnimation.hpp \
-    CardRotationAnimation.hpp
+    CardRotationAnimation.hpp \
+    DeferredArray.hpp
