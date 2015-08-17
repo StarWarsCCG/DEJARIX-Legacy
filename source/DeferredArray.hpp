@@ -16,7 +16,8 @@ public:
     inline ~DeferredArray()
     {
         auto t = (T*)_data;
-        for (int i = 0; i < _n; ++i) t[i].~T();
+        auto n = _n;
+        while (n > 0) t[--n].~T();
     }
 
     DeferredArray& operator=(const DeferredArray&) = delete;
@@ -27,10 +28,18 @@ public:
 
     constexpr int capacity() const { return N; }
     inline int size() const { return _n; }
+    inline bool hasRoom() const { return _n < N; }
+    inline bool isFull() const { return _n >= N; }
 
     inline void* allocate() { return begin() + _n++; }
     inline T& operator[](ptrdiff_t n) { return begin()[n]; }
     inline const T& operator[](ptrdiff_t n) const { return begin()[n]; }
+
+    template<typename... A> inline T& push(A&&... args)
+    {
+        auto block = allocate();
+        return *(new (block) T(args...));
+    }
 };
 
 #endif

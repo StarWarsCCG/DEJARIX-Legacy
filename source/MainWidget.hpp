@@ -59,7 +59,7 @@ private:
     bool _isCameraPanning;
     QPoint _mouse;
 
-    DeferredArray<QOpenGLTexture, 3> _textures;
+    DeferredArray<QOpenGLTexture, 6> _textures;
     std::vector<CardActor> _cardActors;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;

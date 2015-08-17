@@ -37,6 +37,7 @@ void MainWidget::initializeGL()
     loadImage(QImage("../localuprising.gif"), _textures.allocate());
     loadImage(QImage("../liberation.gif"), _textures.allocate());
     loadImage(QImage("../wood.jpg"), _textures.allocate());
+    _textures.push(QOpenGLTexture::Target2D);
 
     CardSpecifications specifications;
     CardBuilder builder(specifications);
