@@ -38,5 +38,5 @@ HEADERS  += MainWindow.hpp \
     BasicProgram.hpp \
     BasicBufferObject.hpp \
     TextureManager.hpp \
-    CardFlipAnimation.hpp \
-    CardPositionAnimation.hpp
+    CardPositionAnimation.hpp \
+    CardRotationAnimation.hpp

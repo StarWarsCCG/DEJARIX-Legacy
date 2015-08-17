@@ -166,9 +166,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             auto ii = i + 1;
             const auto& actor = _cardActors[i];
             auto rotation = actor.rotation.toRadians();
-            auto flip = actor.flip.toRadians();
             _cardRotationAnimations.push_back(
-                { i, rotation, rotation + pi<float>(), flip, flip, 0.125f * ii, 60, 0});
+                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0});
         }
         break;
     }
@@ -180,9 +179,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             auto ii = i + 1;
             const auto& actor = _cardActors[i];
             auto rotation = actor.rotation.toRadians();
-            auto flip = actor.flip.toRadians();
             _cardRotationAnimations.push_back(
-                { i, rotation, rotation - pi<float>(), flip, flip, 0.25f, ii * 15, 0});
+                { i, rotation, rotation - pi<float>(), 0.25f, ii * 15, 0});
         }
         break;
     }
@@ -194,10 +192,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             auto ii = i + 1;
             auto& actor = _cardActors[i];
             actor.position.setZ(4.0f);
-            auto rotation = actor.rotation.toRadians();
             auto flip = actor.flip.toRadians();
-            _cardRotationAnimations.push_back(
-                { i, rotation, rotation, flip, flip + pi<float>(), 0.25f, ii * 15, 0});
+            _cardFlipAnimations.push_back(
+                { i, flip, flip + pi<float>(), 0.25f, ii * 15, 0});
         }
         break;
     }
@@ -234,15 +231,14 @@ template<typename T1, typename T2> T1 Overshoot(
     T1 first, T1 last, T2 magnitude, T2 t)
 {
     auto difference = last - first;
-    auto n = -magnitude * difference;
-    return difference * t + first + sin(t * tau<T2>()) * n;
+    return difference * t + first - sin(t * tau<T2>()) * magnitude * difference;
 }
 
 template<typename T1, typename T2> T1 SCurve(T1 first, T1 last, T2 t)
 {
     auto difference = last - first;
-    t = (T2(1) - cos(t * pi<T2>())) * T2(0.5);
-    return difference * t + first;
+    auto tt = (T2(1) - cos(t * pi<T2>())) * T2(0.5);
+    return difference * tt + first;
 }
 
 void MainWidget::onTimer()
@@ -250,32 +246,46 @@ void MainWidget::onTimer()
     for (auto i = _cardRotationAnimations.begin();
          i != _cardRotationAnimations.end();)
     {
-        auto& cfa = *i;
-        auto& actor = _cardActors[cfa.cardId];
-        //actor.position.setZ(4.0f);
+        auto& actor = _cardActors[i->cardId];
 
-        if (cfa.currentStep < cfa.stepCount)
+        if (i->currentStep < i->stepCount)
         {
-            auto t = float(cfa.currentStep++) / float(cfa.stepCount);
+            auto t = float(i->currentStep++) / float(i->stepCount);
             actor.rotation = RotationF::fromRadians(Overshoot<float>(
-                cfa.firstRotation,
-                cfa.lastRotation,
-                cfa.magnitude,
-                t));
-
-            actor.flip = RotationF::fromRadians(Overshoot<float>(
-                cfa.firstFlip,
-                cfa.lastFlip,
-                cfa.magnitude,
+                i->firstRadians,
+                i->lastRadians,
+                i->magnitude,
                 t));
 
             ++i;
         }
         else
         {
-            actor.rotation = RotationF::fromRadians(cfa.lastRotation);
-            actor.flip = RotationF::fromRadians(cfa.lastFlip);
+            actor.rotation = RotationF::fromRadians(i->lastRadians);
             i = _cardRotationAnimations.erase(i);
+        }
+    }
+
+    for (auto i = _cardFlipAnimations.begin();
+         i != _cardFlipAnimations.end();)
+    {
+        auto& actor = _cardActors[i->cardId];
+
+        if (i->currentStep < i->stepCount)
+        {
+            auto t = float(i->currentStep++) / float(i->stepCount);
+            actor.flip = RotationF::fromRadians(Overshoot<float>(
+                i->firstRadians,
+                i->lastRadians,
+                i->magnitude,
+                t));
+
+            ++i;
+        }
+        else
+        {
+            actor.flip = RotationF::fromRadians(i->lastRadians);
+            i = _cardFlipAnimations.erase(i);
         }
     }
 
