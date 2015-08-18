@@ -18,10 +18,9 @@ struct CardActor
     RotationF rotation;
     RotationF flip;
 
-    QMatrix4x4 modelMatrix;
     QMatrix4x4 modelViewMatrix;
 
-    void update(const QMatrix4x4& viewMatrix);
+    void update(QMatrix4x4 viewMatrix);
 };
 
 #endif

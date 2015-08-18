@@ -372,7 +372,14 @@ QOpenGLTexture& MainWidget::loadImage(const QImage& image)
         }
         else
         {
-            return _textures.push(image);
+            auto& texture = _textures.push(
+                image.mirrored(false, true),
+                QOpenGLTexture::MipMapGeneration::GenerateMipMaps);
+
+            texture.setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+            texture.setMagnificationFilter(QOpenGLTexture::Linear);
+
+            return texture;
         }
     }
 
