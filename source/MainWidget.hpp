@@ -18,6 +18,9 @@
 #include <memory>
 #include <random>
 
+constexpr int AirMatrixIndex = 0;
+constexpr int CameraMatrixIndex = 1;
+
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -45,7 +48,6 @@ protected:
 private:
     QOpenGLTexture& loadImage(const QImage& image);
     QOpenGLTexture& loadText(const QString& text);
-    QVector3D unproject(QPoint pixel);
 
     std::unique_ptr<BasicProgram> _program;
     std::unique_ptr<CardBuffer> _cardBuffer;
@@ -55,7 +57,7 @@ private:
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
     Camera _camera;
-    QMatrix4x4 _viewMatrix;
+    QMatrix4x4 _viewMatrices[2];
     bool _isCameraRotating;
     bool _isCameraPanning;
     QPoint _mouse;

@@ -87,7 +87,7 @@ void MainWidget::paintGL()
     for (const auto& actor : _cardActors) _drawTool->draw(actor);
 
     _program->enableTexture(true);
-    _program->setMatrix(_projectionMatrix * _viewMatrix);
+    _program->setMatrix(_projectionMatrix * _viewMatrices[CameraMatrixIndex]);
     _program->setHighlight(QVector4D());
     _textures[2].bind();
     _tableBuffer->draw(*_program);
@@ -119,9 +119,6 @@ void MainWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void MainWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    QVector3D mousePosition = unproject(event->pos());
-    (void)mousePosition;
-
     if (_isCameraRotating)
     {
         QPoint delta = event->pos() - _mouse;
@@ -356,10 +353,11 @@ void MainWidget::onTimer()
         }
     }
 
-    _viewMatrix.setToIdentity();
-    _camera.apply(_viewMatrix);
+    _viewMatrices[CameraMatrixIndex].setToIdentity();
+    _camera.apply(_viewMatrices[CameraMatrixIndex]);
 
-    for (auto& actor : _cardActors) actor.update(_viewMatrix);
+    for (auto& actor : _cardActors)
+        actor.update(_viewMatrices[CameraMatrixIndex]);
 
     update();
 }
@@ -416,25 +414,6 @@ QOpenGLTexture& MainWidget::loadText(const QString& text)
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
     return loadImage(image);
-}
-
-QVector3D MainWidget::unproject(QPoint pixel)
-{
-    int x = pixel.x();
-    int y = height() - pixel.y();
-
-    GLfloat depthSample;
-    glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depthSample);
-
-    QVector4D v(
-        float(x - _viewport[0]) * 2.0f / float(_viewport[2]) - 1.0f,
-        float(y - _viewport[1]) * 2.0f / float(_viewport[3]) - 1.0f,
-        2.0f * depthSample - 1.0f,
-        1.0f);
-
-    QMatrix4x4 viewProjectionMatrix = _projectionMatrix * _viewMatrix;
-    QMatrix4x4 inverse = viewProjectionMatrix.inverted();
-    return (inverse * v).toVector3DAffine();
 }
 
 void MainWidget::dump()
