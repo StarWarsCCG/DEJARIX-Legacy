@@ -27,6 +27,7 @@ void MainWidget::initializeGL()
     initializeOpenGLFunctions();
 
     QTimer* timer = new QTimer(this);
+    timer->setTimerType(Qt::PreciseTimer);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
@@ -142,6 +143,19 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
+    case Qt::Key_Q:
+    {
+        for (int i = 0; i < 60; ++i)
+        {
+            auto actor = _cardActors[i];
+            auto rotation = actor.rotation.toRadians();
+            _cardRotationAnimations.push_back(
+                {i, rotation, rotation + pi<float>(), 0.25f, 75 - i, 0});
+        }
+
+        break;
+    }
+
     case Qt::Key_A:
     {
         for (int i = 0; i < 6; ++i)
