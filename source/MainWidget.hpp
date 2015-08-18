@@ -16,6 +16,7 @@
 #include <QPoint>
 #include <vector>
 #include <memory>
+#include <random>
 
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -65,6 +66,7 @@ private:
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     std::vector<CardPositionAnimation> _cardPositionBoomerangs;
+    std::mt19937_64 _mt;
 };
 
 #endif

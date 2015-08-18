@@ -43,29 +43,18 @@ void MainWidget::initializeGL()
         new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
     _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(*this));
 
-    float locationSpan = _cardBuffer->specifications().height + 1.0f;
-
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 60; ++i)
     {
+        auto z = specifications.depth / 2.0f * float(i * 2 + 1);
+
         CardActor actor;
         actor.topTexture = _textures[0].textureId();
         actor.bottomTexture = _textures[1].textureId();
+        actor.position = QVector3D(0.0f, 0.0f, z);
 
         //actor.rotation = RotationF::fromDegrees(90.0f);
 
         _cardActors.push_back(actor);
-    }
-
-    float count = float(_cardActors.size() - 1);
-    float firstX = count * locationSpan / -2.0f;
-
-    for (std::size_t i = 0; i < _cardActors.size(); ++i)
-    {
-        _cardActors[i].position =
-            QVector3D(
-                firstX + float(i) * locationSpan,
-                0.0f,
-                specifications.depth / 2.0f);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -181,15 +170,30 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_D:
     {
-        for (int i = 0; i < 6; ++i)
+        std::uniform_int_distribution<int> distribution(0, 59);
+        int n = distribution(_mt);
+
+        QVector3D bounce(
+            0.0f, 0.0f, _cardBuffer->specifications().width / 2.0f);
+        auto actor = _cardActors[n];
+        auto flip = actor.flip.toRadians();
+        _cardPositionBoomerangs.push_back({
+            n,
+            actor.position,
+            actor.position + bounce,
+            30,
+            0});
+
+        _cardFlipAnimations.push_back(
+            {n, flip, flip + pi<float>(), 0.0f, 30, 0});
+
+        for (int i = n + 1; i < 60; ++i)
         {
-            auto ii = i + 1;
-            auto& actor = _cardActors[i];
-            actor.position.setZ(4.0f);
-            auto flip = actor.flip.toRadians();
-            _cardFlipAnimations.push_back(
-                { i, flip, flip + pi<float>(), 0.25f, ii * 15, 0 });
+            actor = _cardActors[i];
+            _cardPositionBoomerangs.push_back(
+                {i, actor.position, actor.position + bounce * 2.0f, 30, 0});
         }
+
         break;
     }
 
@@ -414,9 +418,8 @@ QVector3D MainWidget::unproject(QPoint pixel)
         2.0f * depthSample - 1.0f,
         1.0f);
 
-    QMatrix4x4 modelViewProjectionMatrix = _projectionMatrix
-        * _viewMatrix;
-    QMatrix4x4 inverse = modelViewProjectionMatrix.inverted();
+    QMatrix4x4 viewProjectionMatrix = _projectionMatrix * _viewMatrix;
+    QMatrix4x4 inverse = viewProjectionMatrix.inverted();
     return (inverse * v).toVector3DAffine();
 }
 
