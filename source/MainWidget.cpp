@@ -32,12 +32,9 @@ void MainWidget::initializeGL()
 
     _program = std::unique_ptr<BasicProgram>(new BasicProgram(*this));
 
-    //_tableTexture = loadText("DEJARIX");
-
-    loadImage(QImage("../localuprising.gif"), _textures.allocate());
-    loadImage(QImage("../liberation.gif"), _textures.allocate());
-    loadImage(QImage("../wood.jpg"), _textures.allocate());
-    _textures.push(QOpenGLTexture::Target2D);
+    loadImage(QImage("../localuprising.gif"));
+    loadImage(QImage("../liberation.gif"));
+    loadImage(QImage("../wood.jpg"));
 
     CardSpecifications specifications;
     CardBuilder builder(specifications);
@@ -46,8 +43,7 @@ void MainWidget::initializeGL()
         new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
     _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(*this));
 
-    float locationSpan = _cardBuffer->specifications().height
-        + 1.0f;
+    float locationSpan = _cardBuffer->specifications().height + 1.0f;
 
     for (int i = 0; i < 6; ++i)
     {
@@ -210,6 +206,18 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         break;
     }
 
+    case Qt::Key_G:
+    {
+        auto& actor = _cardActors[3];
+        auto lastPosition = QVector3D(
+            actor.position.x() + 2.0f,
+            actor.position.y() + 8.0f,
+            actor.position.z() + 2.0f);
+        _cardPositionBoomerangs.push_back(
+            { 3, actor.position, lastPosition, 30, 0 });
+        break;
+    }
+
     default:
         break;
     }
@@ -235,6 +243,12 @@ template<typename T1, typename T2> T1 SCurve(T1 first, T1 last, T2 t)
     auto difference = last - first;
     auto tt = (T2(1) - cos(t * pi<T2>())) * T2(0.5);
     return difference * tt + first;
+}
+
+template<typename T1, typename T2> T1 Boomerang(T1 first, T1 last, T2 t)
+{
+    auto tt = sin(t * pi<T2>());
+    return Linear(first, last, tt);
 }
 
 void MainWidget::onTimer()
@@ -305,18 +319,34 @@ void MainWidget::onTimer()
         }
     }
 
+    for (auto i = _cardPositionBoomerangs.begin();
+         i != _cardPositionBoomerangs.end();)
+    {
+        auto& actor = _cardActors[i->cardId];
+
+        if (i->currentStep < i->stepCount)
+        {
+            auto t = float(i->currentStep++) / float(i->stepCount);
+            actor.position = Boomerang(i->firstPosition, i->lastPosition, t);
+
+            ++i;
+        }
+        else
+        {
+            actor.position = i->firstPosition;
+            i = _cardPositionBoomerangs.erase(i);
+        }
+    }
+
     _viewMatrix.setToIdentity();
     _camera.apply(_viewMatrix);
 
-    for (auto& actor : _cardActors)
-    {
-        actor.update(_viewMatrix);
-    }
+    for (auto& actor : _cardActors) actor.update(_viewMatrix);
 
     update();
 }
 
-void MainWidget::loadImage(const QImage& image, void* target)
+QOpenGLTexture& MainWidget::loadImage(const QImage& image)
 {
     if (image.width() > 0 && image.height() > 0)
     {
@@ -331,25 +361,25 @@ void MainWidget::loadImage(const QImage& image, void* target)
             // http://doc.qt.io/qt-5/qopengltexture.html#details
             // Qt flips the images vertically... on purpose... *sigh*
 
-            auto texture = new (target) QOpenGLTexture(
+            auto& texture = _textures.push(
                 image.scaled(width, height).mirrored(false, true),
                 QOpenGLTexture::MipMapGeneration::GenerateMipMaps);
 
-            texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-            texture->setMagnificationFilter(QOpenGLTexture::Linear);
+            texture.setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+            texture.setMagnificationFilter(QOpenGLTexture::Linear);
+
+            return texture;
         }
         else
         {
-            new (target) QOpenGLTexture(image);
+            return _textures.push(image);
         }
     }
-    else
-    {
-        new (target) QOpenGLTexture(QOpenGLTexture::Target2D);
-    }
+
+    return _textures.push(QOpenGLTexture::Target2D);
 }
 
-void MainWidget::loadText(const QString& text, void* target)
+QOpenGLTexture& MainWidget::loadText(const QString& text)
 {
     QFont font("../DejaVuSans.ttf");
     font.setPixelSize(64);
@@ -360,7 +390,7 @@ void MainWidget::loadText(const QString& text, void* target)
     painter.setFont(font);
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
-    loadImage(image, target);
+    return loadImage(image);
 }
 
 QVector3D MainWidget::unproject(QPoint pixel)

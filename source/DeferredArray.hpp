@@ -2,6 +2,7 @@
 #define DEFERREDARRAY_HPP
 
 #include <cstddef>
+#include <cassert>
 
 template<class T, int N> class DeferredArray
 {
@@ -31,7 +32,7 @@ public:
     inline bool hasRoom() const { return _n < N; }
     inline bool isFull() const { return _n >= N; }
 
-    inline void* allocate() { return begin() + _n++; }
+    inline void* allocate() { assert(_n < N); return begin() + _n++; }
     inline T& operator[](ptrdiff_t n) { return begin()[n]; }
     inline const T& operator[](ptrdiff_t n) const { return begin()[n]; }
 
@@ -40,6 +41,8 @@ public:
         auto block = allocate();
         return *(new (block) T(args...));
     }
+
+    inline void pop() { ((T*)_data)[--_n].~T(); }
 };
 
 #endif

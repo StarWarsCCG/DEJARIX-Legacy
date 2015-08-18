@@ -42,8 +42,8 @@ protected:
     virtual void wheelEvent(QWheelEvent* event);
 
 private:
-    void loadImage(const QImage& image, void *target);
-    void loadText(const QString& text, void* target);
+    QOpenGLTexture& loadImage(const QImage& image);
+    QOpenGLTexture& loadText(const QString& text);
     QVector3D unproject(QPoint pixel);
 
     std::unique_ptr<BasicProgram> _program;
@@ -64,6 +64,7 @@ private:
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
+    std::vector<CardPositionAnimation> _cardPositionBoomerangs;
 };
 
 #endif
