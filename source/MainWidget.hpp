@@ -18,9 +18,6 @@
 #include <memory>
 #include <random>
 
-constexpr int AirMatrixIndex = 0;
-constexpr int CameraMatrixIndex = 1;
-
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT

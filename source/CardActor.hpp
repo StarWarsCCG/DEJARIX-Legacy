@@ -6,12 +6,16 @@
 #include <QMatrix4x4>
 #include <QOpenGLFunctions>
 
+constexpr int AirMatrixIndex = 0;
+constexpr int CameraMatrixIndex = 1;
+
 struct CardActor
 {
     GLuint topTexture = 0;
     GLuint bottomTexture = 0;
     bool isTopVisible = true;
     float depthFactor = 1.0f;
+    int viewMatrixIndex = CameraMatrixIndex;
 
     QVector4D highlight;
     QVector3D position;
@@ -20,7 +24,7 @@ struct CardActor
 
     QMatrix4x4 modelViewMatrix;
 
-    void update(QMatrix4x4 viewMatrix);
+    void update(QMatrix4x4* viewMatrices);
 };
 
 #endif

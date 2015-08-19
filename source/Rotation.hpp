@@ -19,6 +19,20 @@ constexpr T radiansPerDegree() { return pi<T>() / T(180); }
 template<typename T>
 class Rotation
 {
+    T _radians;
+
+    constexpr Rotation(T radians) : _radians(radians) {}
+
+    static T cycle(T radians)
+    {
+        if (radians >= pi<T>())
+            radians -= tau<T>();
+        else if (radians < -pi<T>())
+            radians += tau<T>();
+
+        return radians;
+    }
+
 public:
     static constexpr Rotation fromDegrees(T degrees)
     {
@@ -53,33 +67,18 @@ public:
         return *this;
     }
 
-    const Rotation<T> operator+(const Rotation<T>& other) const
+    Rotation<T> operator+(const Rotation<T>& other) const
     {
         return Rotation<T>(_radians) += other;
     }
 
-    const Rotation<T> operator-(const Rotation<T>& other) const
+    Rotation<T> operator-(const Rotation<T>& other) const
     {
         return Rotation<T>(_radians) -= other;
     }
 
-    T toRadians() const { return _radians; }
-    T toDegrees() const { return _radians * degreesPerRadian<T>(); }
-
-private:
-    Rotation(T radians) : _radians(radians) {}
-
-    T _radians;
-
-    static T cycle(T radians)
-    {
-        if (radians >= pi<T>())
-            radians -= tau<T>();
-        else if (radians < -pi<T>())
-            radians += tau<T>();
-
-        return radians;
-    }
+    constexpr T toRadians() const { return _radians; }
+    constexpr T toDegrees() const { return _radians * degreesPerRadian<T>(); }
 };
 
 typedef Rotation<float> RotationF;

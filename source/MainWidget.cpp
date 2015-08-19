@@ -6,6 +6,13 @@
 #include <QVector2D>
 #include <QDir>
 
+static float findDistance(RotationF fov, float height)
+{
+    auto theta = fov.toRadians() / 2.0f;
+    auto h = height / 2.0f;
+    return h / tan(theta);
+}
+
 MainWidget::MainWidget(QWidget* parent)
     : QOpenGLWidget(parent)
     , _isCameraRotating(false)
@@ -55,6 +62,16 @@ void MainWidget::initializeGL()
 
         //actor.rotation = RotationF::fromDegrees(90.0f);
 
+        _cardActors.push_back(actor);
+    }
+
+    {
+        auto distance = findDistance(RotationF::fromDegrees(60.0f), 10.0f);
+        CardActor actor;
+        actor.topTexture = _textures[0].textureId();
+        actor.bottomTexture = _textures[1].textureId();
+        actor.position = QVector3D(4.0f, 0.0f, -distance);
+        actor.viewMatrixIndex = AirMatrixIndex;
         _cardActors.push_back(actor);
     }
 
@@ -150,6 +167,14 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 {i, rotation, rotation + pi<float>(), 0.25f, 75 - i, 0});
         }
 
+        break;
+    }
+
+    case Qt::Key_W:
+    {
+        auto position = _cardActors[60].position;
+        _cardPositionBoomerangs.push_back(
+            {60, position, position - QVector3D(8.0f, 0.0f, 0.0f), 30, 0});
         break;
     }
 
@@ -357,7 +382,7 @@ void MainWidget::onTimer()
     _camera.apply(_viewMatrices[CameraMatrixIndex]);
 
     for (auto& actor : _cardActors)
-        actor.update(_viewMatrices[CameraMatrixIndex]);
+        actor.update(_viewMatrices);
 
     update();
 }

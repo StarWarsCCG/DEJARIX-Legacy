@@ -3,7 +3,7 @@
 static constexpr QVector4D Origin(0.0f, 0.0f, 0.0f, 1.0f);
 static constexpr QVector4D Arrow(0.0f, 0.0f, 1.0f, 1.0f);
 
-void CardActor::update(QMatrix4x4 viewMatrix)
+void CardActor::update(QMatrix4x4* viewMatrices)
 {
     QMatrix4x4 modelMatrix;
     modelMatrix.translate(position);
@@ -11,7 +11,7 @@ void CardActor::update(QMatrix4x4 viewMatrix)
     modelMatrix.rotate(rotation.toDegrees(), 0.0f, 0.0f, 1.0f);
     modelMatrix.scale(1.0f, 1.0f, depthFactor);
 
-    modelViewMatrix = viewMatrix * modelMatrix;
+    modelViewMatrix = viewMatrices[viewMatrixIndex] * modelMatrix;
 
     QVector4D modelViewOrigin = modelViewMatrix * Origin;
     QVector4D modelViewArrow = modelViewMatrix * Arrow;
