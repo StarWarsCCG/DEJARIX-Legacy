@@ -15,6 +15,7 @@
 #include <QImage>
 #include <QPoint>
 #include <vector>
+#include <unordered_map>
 #include <memory>
 #include <random>
 
@@ -53,6 +54,7 @@ private:
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
+    RotationF _fovy;
     Camera _camera;
     QMatrix4x4 _viewMatrices[2];
     bool _isCameraRotating;
@@ -60,7 +62,7 @@ private:
     QPoint _mouse;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
-    std::vector<CardActor> _cardActors;
+    std::unordered_map<int, CardActor> _cardActors;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;

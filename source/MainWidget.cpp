@@ -18,6 +18,7 @@ MainWidget::MainWidget(QWidget* parent)
     , _isCameraRotating(false)
     , _isCameraPanning(false)
 {
+    _fovy = RotationF::fromDegrees(60.0f);
     _camera.distance = 32.0f;
     _camera.angle = RotationF::fromDegrees(-10.0f);
     setMouseTracking(true);
@@ -62,17 +63,7 @@ void MainWidget::initializeGL()
 
         //actor.rotation = RotationF::fromDegrees(90.0f);
 
-        _cardActors.push_back(actor);
-    }
-
-    {
-        auto distance = findDistance(RotationF::fromDegrees(60.0f), 10.0f);
-        CardActor actor;
-        actor.topTexture = _textures[0].textureId();
-        actor.bottomTexture = _textures[1].textureId();
-        actor.position = QVector3D(4.0f, 0.0f, -distance);
-        actor.viewMatrixIndex = AirMatrixIndex;
-        _cardActors.push_back(actor);
+        _cardActors[i] = actor;
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -90,7 +81,7 @@ void MainWidget::resizeGL(int w, int h)
 {
     float ratio = float(w) / float(h);
     _projectionMatrix.setToIdentity();
-    _projectionMatrix.perspective(60.0f, ratio, 1.0f, 1024.0f);
+    _projectionMatrix.perspective(_fovy.toDegrees(), ratio, 1.0f, 1024.0f);
     glViewport(0, 0, w, h);
     glGetIntegerv(GL_VIEWPORT, _viewport);
 }
@@ -101,7 +92,7 @@ void MainWidget::paintGL()
 
     _drawTool->bind();
 
-    for (const auto& actor : _cardActors) _drawTool->draw(actor);
+    for (auto i : _cardActors) _drawTool->draw(i.second);
 
     _program->enableTexture(true);
     _program->setMatrix(_projectionMatrix * _viewMatrices[CameraMatrixIndex]);
@@ -172,9 +163,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_W:
     {
-        auto position = _cardActors[60].position;
-        _cardPositionBoomerangs.push_back(
-            {60, position, position - QVector3D(8.0f, 0.0f, 0.0f), 30, 0});
+
         break;
     }
 
@@ -381,8 +370,8 @@ void MainWidget::onTimer()
     _viewMatrices[CameraMatrixIndex].setToIdentity();
     _camera.apply(_viewMatrices[CameraMatrixIndex]);
 
-    for (auto& actor : _cardActors)
-        actor.update(_viewMatrices);
+    for (auto& i : _cardActors)
+        i.second.update(_viewMatrices);
 
     update();
 }
