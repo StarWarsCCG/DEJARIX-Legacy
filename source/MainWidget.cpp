@@ -6,6 +6,16 @@
 #include <QVector2D>
 #include <QDir>
 
+static constexpr float TableV = 512.0f;
+static constexpr float TableT = 128.0f;
+
+static const float TableMesh[] = {
+    TableV, TableV, 0.0f, TableT, TableT,
+    TableV, -TableV, 0.0f, TableT, -TableT,
+    -TableV, -TableV, 0.0f, -TableT, -TableT,
+    -TableV, TableV, 0.0f, -TableT, TableT
+};
+
 static constexpr GLsizei Stride = sizeof(GLfloat) * 5;
 
 static constexpr GLvoid* offset(int offset)
@@ -51,7 +61,10 @@ void MainWidget::initializeGL()
 
     loadImage(QImage("../localuprising.gif"));
     loadImage(QImage("../liberation.gif"));
-    loadImage(QImage("../wood.jpg"));
+    _tableBuffer.texture = loadImage(QImage("../wood.jpg")).textureId();
+
+
+
     loadCardMesh();
 
     auto vertexShaderSource =
@@ -183,6 +196,25 @@ void MainWidget::paintGL()
         _uniforms.matrix, _projectionMatrix * _viewMatrices[CameraMatrixIndex]);
     _program.setUniformValue(_uniforms.highlight, QVector4D());
     _textures[2].bind();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribPointer(
+        _attributes.position,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        TableMesh);
+
+    glVertexAttribPointer(
+        _attributes.texture,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        TableMesh + 3);
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void MainWidget::mousePressEvent(QMouseEvent* event)

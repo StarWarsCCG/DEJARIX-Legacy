@@ -95,6 +95,11 @@ private:
         GLvoid* bottomOffset;
     } _cardBuffer;
 
+    struct
+    {
+        GLuint texture;
+    } _tableBuffer;
+
     QOpenGLShaderProgram _program;
 };
 
