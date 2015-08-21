@@ -2,17 +2,16 @@
 #define MAINWIDGET_HPP
 
 #include "Camera.hpp"
-#include "TableBuffer.hpp"
-#include "BasicProgram.hpp"
 #include "CardActor.hpp"
-#include "CardBuffer.hpp"
 #include "CardRotationAnimation.hpp"
 #include "CardPositionAnimation.hpp"
+#include "CardSpecifications.hpp"
 #include "DeferredArray.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLTexture>
+#include <QOpenGLShader>
 #include <QImage>
 #include <QPoint>
 #include <vector>
@@ -47,10 +46,10 @@ protected:
 private:
     QOpenGLTexture& loadImage(const QImage& image);
     QOpenGLTexture& loadText(const QString& text);
-
-    std::unique_ptr<BasicProgram> _program;
-    std::unique_ptr<CardBuffer> _cardBuffer;
-    std::unique_ptr<TableBuffer> _tableBuffer;
+    void bind(GLuint vbo);
+    GLuint loadMesh(const std::vector<GLfloat>& data);
+    GLuint loadIndexBuffer(const std::vector<GLushort>& data);
+    void loadCardMesh();
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
@@ -62,12 +61,41 @@ private:
     QPoint _mouse;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
+    std::vector<GLuint> _vertexBufferObjects;
     std::unordered_map<int, CardActor> _cardActors;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     std::vector<CardPositionAnimation> _cardPositionBoomerangs;
     std::mt19937_64 _mt;
+
+    struct
+    {
+        GLuint position;
+        GLuint texture;
+    } _attributes;
+
+    struct
+    {
+        GLuint matrix;
+        GLuint texture;
+        GLuint highlight;
+        GLuint enableTexture;
+    } _uniforms;
+
+    struct
+    {
+        CardSpecifications specifications;
+        GLuint vertexBufferObject;
+        GLuint indexBufferObject;
+        GLsizei topCount;
+        GLsizei middleCount;
+        GLsizei bottomCount;
+        GLvoid* middleOffset;
+        GLvoid* bottomOffset;
+    } _cardBuffer;
+
+    QOpenGLShaderProgram _program;
 };
 
 #endif

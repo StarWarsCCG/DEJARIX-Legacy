@@ -6,6 +6,13 @@
 #include <QVector2D>
 #include <QDir>
 
+static constexpr GLsizei Stride = sizeof(GLfloat) * 5;
+
+static constexpr GLvoid* offset(int offset)
+{
+    return (GLfloat*)0 + offset;
+}
+
 static float findDistance(RotationF fov, float height)
 {
     auto theta = fov.toRadians() / 2.0f;
@@ -21,13 +28,16 @@ MainWidget::MainWidget(QWidget* parent)
     _fovy = RotationF::fromDegrees(60.0f);
     _camera.distance = 32.0f;
     _camera.angle = RotationF::fromDegrees(-10.0f);
+    _cardBuffer.specifications = {6.3f, 8.8f, 0.05f, 0.25f, 4};
     setMouseTracking(true);
 }
 
 MainWidget::~MainWidget()
 {
     makeCurrent();
-    _program->close();
+    _program.release();
+
+    glDeleteBuffers(_vertexBufferObjects.size(), _vertexBufferObjects.data());
 }
 
 void MainWidget::initializeGL()
@@ -39,20 +49,61 @@ void MainWidget::initializeGL()
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
-    _program = std::unique_ptr<BasicProgram>(new BasicProgram(*this));
-
     loadImage(QImage("../localuprising.gif"));
     loadImage(QImage("../liberation.gif"));
     loadImage(QImage("../wood.jpg"));
+    loadCardMesh();
 
-    CardSpecifications specifications;
-    CardBuilder builder(specifications);
-    _cardBuffer = std::unique_ptr<CardBuffer>(new CardBuffer(builder));
-    _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(*this));
+    auto vertexShaderSource =
+        "attribute highp vec4 position;\n"
+        "attribute lowp vec2 tc;\n"
+        "varying lowp vec2 vtc;\n"
+        "uniform highp mat4 matrix;\n"
+        "void main() {\n"
+        "   vtc = tc;\n"
+        "   gl_Position = matrix * position;\n"
+        "}\n";
+
+    auto fragmentShaderSource =
+#ifdef Q_OS_WIN
+        // This produces a warning in Linux:
+        // warning C7022: unrecognized profile specifier "precision"
+
+        // This explodes in OSX. Apparently, only Windows demands it.
+        //"precision highp float;\n"
+#endif
+        "uniform bool enableTexture;\n"
+        "uniform sampler2D texture;\n"
+        "uniform lowp vec4 highlight;\n"
+        "varying lowp vec2 vtc;\n"
+        "void main() {\n"
+        "   vec4 result = vec4(0.0, 0.0, 0.0, 1.0);\n"
+        "   if (enableTexture) result = texture2D(texture, vtc);\n"
+        "   gl_FragColor = result + highlight;\n"
+        "}\n";
+
+    _program.addShaderFromSourceCode(
+        QOpenGLShader::Vertex,
+        vertexShaderSource);
+    _program.addShaderFromSourceCode(
+        QOpenGLShader::Fragment,
+        fragmentShaderSource);
+
+    _program.link();
+    _program.bind();
+    _attributes.position = _program.attributeLocation("position");
+    _attributes.texture = _program.attributeLocation("tc");
+    _uniforms.matrix = _program.uniformLocation("matrix");
+    _uniforms.texture = _program.uniformLocation("texture");
+    _uniforms.highlight = _program.uniformLocation("highlight");
+    _uniforms.enableTexture = _program.uniformLocation("enableTexture");
+    _program.setUniformValue(_uniforms.texture, 0);
+    _program.setUniformValue(_uniforms.enableTexture, true);
+    _program.setUniformValue(_uniforms.highlight, QVector4D());
 
     for (int i = 0; i < 60; ++i)
     {
-        auto z = specifications.depth / 2.0f * float(i * 2 + 1);
+        auto z = _cardBuffer.specifications.depth / 2.0f * float(i * 2 + 1);
 
         CardActor actor;
         actor.topTexture = _textures[0].textureId();
@@ -72,7 +123,8 @@ void MainWidget::initializeGL()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
 
-    _program->open();
+    glEnableVertexAttribArray(_attributes.position);
+    glEnableVertexAttribArray(_attributes.texture);
 }
 
 void MainWidget::resizeGL(int w, int h)
@@ -88,36 +140,49 @@ void MainWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto& program = *_program.get();
-    auto& buffer = *_cardBuffer.get();
-    _cardBuffer->bind(program);
+    bind(_cardBuffer.vertexBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardBuffer.indexBufferObject);
 
     for (auto i : _cardActors)
     {
         auto actor = i.second;
-        program.setMatrix(_projectionMatrix * actor.modelViewMatrix);
-        program.setHighlight(actor.highlight);
-        program.enableTexture(false);
-        buffer.drawMiddle();
-        program.enableTexture(true);
+        _program.setUniformValue(
+            _uniforms.matrix, _projectionMatrix * actor.modelViewMatrix);
+        _program.setUniformValue(_uniforms.highlight, actor.highlight);
+
+        _program.setUniformValue(_uniforms.enableTexture, false);
+        glDrawElements(
+            GL_TRIANGLES,
+            _cardBuffer.middleCount,
+            GL_UNSIGNED_SHORT,
+            _cardBuffer.middleOffset);
+        _program.setUniformValue(_uniforms.enableTexture, true);
 
         if (actor.isTopVisible)
         {
-            program._functions.glBindTexture(GL_TEXTURE_2D, actor.topTexture);
-            buffer.drawTop();
+            glBindTexture(GL_TEXTURE_2D, actor.topTexture);
+            glDrawElements(
+                GL_TRIANGLES,
+                _cardBuffer.topCount,
+                GL_UNSIGNED_SHORT,
+                nullptr);
         }
         else
         {
-            program._functions.glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
-            buffer.drawBottom();
+            glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
+            glDrawElements(
+                GL_TRIANGLES,
+                _cardBuffer.bottomCount,
+                GL_UNSIGNED_SHORT,
+                _cardBuffer.bottomOffset);
         }
     }
 
-    _program->enableTexture(true);
-    _program->setMatrix(_projectionMatrix * _viewMatrices[CameraMatrixIndex]);
-    _program->setHighlight(QVector4D());
+    _program.setUniformValue(_uniforms.enableTexture, true);
+    _program.setUniformValue(
+        _uniforms.matrix, _projectionMatrix * _viewMatrices[CameraMatrixIndex]);
+    _program.setUniformValue(_uniforms.highlight, QVector4D());
     _textures[2].bind();
-    _tableBuffer->draw(*_program);
 }
 
 void MainWidget::mousePressEvent(QMouseEvent* event)
@@ -218,7 +283,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         int n = distribution(_mt);
 
         QVector3D bounce(
-            0.0f, 0.0f, _cardBuffer->specifications().width / 2.0f);
+            0.0f, 0.0f, _cardBuffer.specifications.width / 2.0f);
         auto actor = _cardActors[n];
         auto flip = actor.flip.toRadians();
         _cardPositionBoomerangs.push_back({
@@ -447,6 +512,305 @@ QOpenGLTexture& MainWidget::loadText(const QString& text)
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
     return loadImage(image);
+}
+
+void MainWidget::bind(GLuint vbo)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(
+        _attributes.position,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        offset(0));
+
+    glVertexAttribPointer(
+        _attributes.texture,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        offset(3));
+}
+
+GLuint MainWidget::loadMesh(const std::vector<GLfloat>& data)
+{
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        data.size() * sizeof(GLfloat),
+        data.data(),
+        GL_STATIC_DRAW);
+
+    _vertexBufferObjects.push_back(vbo);
+    return vbo;
+}
+
+GLuint MainWidget::loadIndexBuffer(const std::vector<GLushort>& data)
+{
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        data.size() * sizeof(GLushort),
+        data.data(),
+        GL_STATIC_DRAW);
+
+    _vertexBufferObjects.push_back(vbo);
+    return vbo;
+}
+
+void MainWidget::loadCardMesh()
+{
+    std::vector<GLfloat> vertices;
+    std::vector<GLfloat> textureCoordinates;
+    std::vector<GLushort> topIndices;
+    std::vector<GLushort> middleIndices;
+    std::vector<GLushort> bottomIndices;
+
+    auto addVertex = [&](float x, float y, float s, float t)
+    {
+        float d = _cardBuffer.specifications.depth / 2.0f;
+
+        vertices.push_back(x);
+        vertices.push_back(y);
+        vertices.push_back(d);
+        textureCoordinates.push_back(s);
+        textureCoordinates.push_back(t);
+
+        vertices.push_back(x);
+        vertices.push_back(y);
+        vertices.push_back(-d);
+        textureCoordinates.push_back(1.0f - s);
+        textureCoordinates.push_back(t);
+    };
+
+    auto addTriangle = [&](GLushort a, GLushort b, GLushort c)
+    {
+        middleIndices.push_back(a);
+        middleIndices.push_back(b);
+        middleIndices.push_back(c);
+    };
+
+    auto addTriangles = [&](GLushort a, GLushort b, GLushort c)
+    {
+        topIndices.push_back(a);
+        topIndices.push_back(b);
+        topIndices.push_back(c);
+
+        bottomIndices.push_back(c + 1);
+        bottomIndices.push_back(b + 1);
+        bottomIndices.push_back(a + 1);
+    };
+
+    auto addQuad = [&](GLushort a, GLushort b, GLushort c, GLushort d)
+    {
+        addTriangle(a, b, c);
+        addTriangle(a, c, d);
+    };
+
+    auto addQuads = [&](GLushort a, GLushort b, GLushort c, GLushort d)
+    {
+        addTriangles(a, b, c);
+        addTriangles(a, c, d);
+    };
+
+    auto specifications = _cardBuffer.specifications;
+
+    float w = specifications.width / 2.0f;
+    float h = specifications.height / 2.0f;
+    float cr = specifications.cornerRadius;
+    int cd = specifications.cornerDetail;
+
+    int vertexCount = 8 * cd + 16;
+    vertices.reserve(vertexCount * 3);
+    textureCoordinates.reserve(vertexCount * 2);
+
+    // upper left corner
+    addVertex(cr - w, h - cr, cr / specifications.width,
+        cr / specifications.height);
+
+    addVertex(-w, h - cr, 0.0f, cr / specifications.height);
+
+    float theta = 90.0f / float(cd);
+    for (int i = 1; i < cd; ++i)
+    {
+        float radians = float(i) * theta * radiansPerDegree<float>();
+        float dx = cr * cos(radians);
+        float dy = cr * sin(radians);
+
+        addVertex(
+            cr - w - dx,
+            h  - cr + dy,
+            (cr - dx) / specifications.width,
+            (cr - dy) / specifications.height);
+    }
+
+    addVertex(cr - w, h, cr / specifications.width, 0.0f);
+
+    // upper right corner
+    addVertex(-vertices[0], vertices[1],
+        1.0f - textureCoordinates[0],
+        textureCoordinates[1]);
+
+    int previousVertex = vertices.size() - 6;
+    int previousTexture = textureCoordinates.size() - 4;
+
+    int mirrorVertex = vertices.size() - 12;
+    int mirrorTexture = textureCoordinates.size() - 8;
+
+    for (int i = 0; i <= cd; ++i)
+    {
+        addVertex(
+            -vertices[mirrorVertex],
+            vertices[mirrorVertex + 1],
+            1.0f - textureCoordinates[mirrorTexture],
+            textureCoordinates[mirrorTexture + 1]);
+
+        mirrorVertex -= 6;
+        mirrorTexture -= 4;
+    }
+
+    // lower right corner
+    addVertex(
+        vertices[previousVertex],
+        -vertices[previousVertex + 1],
+        textureCoordinates[previousTexture],
+        1.0f - textureCoordinates[previousTexture + 1]);
+
+    previousVertex = vertices.size() - 6;
+    previousTexture = textureCoordinates.size() - 4;
+
+    mirrorVertex = vertices.size() - 12;
+    mirrorTexture = textureCoordinates.size() - 8;
+
+    for (int i = 0; i <= cd; ++i)
+    {
+        addVertex(
+            vertices[mirrorVertex],
+            -vertices[mirrorVertex + 1],
+            textureCoordinates[mirrorTexture],
+            1.0f - textureCoordinates[mirrorTexture + 1]);
+
+        mirrorVertex -= 6;
+        mirrorTexture -= 4;
+    }
+
+    // lower left corner
+    addVertex(
+        -vertices[previousVertex],
+        vertices[previousVertex + 1],
+        1.0f - textureCoordinates[previousTexture],
+        textureCoordinates[previousTexture + 1]);
+
+    previousVertex = vertices.size() - 6;
+    previousTexture = textureCoordinates.size() - 4;
+
+    mirrorVertex = vertices.size() - 12;
+    mirrorTexture = textureCoordinates.size() - 8;
+
+    for (int i = 0; i <= cd; ++i)
+    {
+        addVertex(
+            -vertices[mirrorVertex],
+            vertices[mirrorVertex + 1],
+            1.0f - textureCoordinates[mirrorTexture],
+            textureCoordinates[mirrorTexture + 1]);
+
+        mirrorVertex -= 6;
+        mirrorTexture -= 4;
+    }
+    // texture correction
+    for (int i = 0; i < vertexCount; ++i)
+    {
+        int index = i * 2 + 1;
+        textureCoordinates[index] = 1.0f - textureCoordinates[index];
+    }
+
+    // index creation
+    int triangleCount = 16 * cd + 28;
+    int middleTriangleCount = 8 * cd + 8;
+    int topTriangleCount = (triangleCount - middleTriangleCount) / 2;
+
+    topIndices.reserve(topTriangleCount * 3);
+    middleIndices.reserve(middleTriangleCount * 3);
+    bottomIndices.reserve(topTriangleCount * 3);
+
+    GLushort corners[5];
+    int cornerSize = 2 * cd + 4;
+
+    for (int i = 0; i < 5; ++i)
+        corners[i] = cornerSize * i;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        int i4 = (i + 1) % 4;
+        addQuads(
+            corners[i],
+            corners[i + 1] - 2,
+            corners[i4] + 2,
+            corners[i4]);
+
+        addQuad(
+            corners[i + 1] - 2,
+            corners[i + 1] - 1,
+            corners[i4] + 3,
+            corners[i4] + 2);
+
+        for (int j = 0; j < cd; ++j)
+        {
+            int k = 2 * (j + 1);
+            addTriangles(
+                corners[i],
+                corners[i] + k,
+                corners[i] + k + 2);
+
+            addQuad(
+                corners[i] + k,
+                corners[i] + k + 1,
+                corners[i] + k + 3,
+                corners[i] + k + 2);
+        }
+    }
+
+    addQuads(corners[0], corners[1], corners[2], corners[3]);
+
+    std::vector<GLfloat> mesh;
+    mesh.reserve(vertexCount * 5);
+
+    for (int i = 0; i < vertexCount; ++i)
+    {
+        int v = i * 3;
+        mesh.push_back(vertices[v + 0]);
+        mesh.push_back(vertices[v + 1]);
+        mesh.push_back(vertices[v + 2]);
+
+        int t = i * 2;
+        mesh.push_back(textureCoordinates[t + 0]);
+        mesh.push_back(textureCoordinates[t + 1]);
+    }
+
+    std::vector<GLushort> indices;
+    indices.reserve(
+        topIndices.size() + middleIndices.size() + bottomIndices.size());
+
+    for (auto index : topIndices) indices.push_back(index);
+    for (auto index : middleIndices) indices.push_back(index);
+    for (auto index : bottomIndices) indices.push_back(index);
+
+    _cardBuffer.vertexBufferObject = loadMesh(mesh);
+    _cardBuffer.indexBufferObject = loadIndexBuffer(indices);
+    _cardBuffer.topCount = topIndices.size();
+    _cardBuffer.middleCount = middleIndices.size();
+    _cardBuffer.bottomCount = bottomIndices.size();
+    _cardBuffer.middleOffset = offset(topIndices.size());
+    _cardBuffer.bottomOffset =
+        (GLushort*)_cardBuffer.middleOffset + middleIndices.size();
 }
 
 void MainWidget::dump()
