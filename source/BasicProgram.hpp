@@ -32,7 +32,7 @@ private:
     GLuint _highlightUniform;
     GLuint _enableTextureUniform;
 
-    friend class CardDrawTool;
+    friend class MainWidget;
 };
 
 #endif

@@ -18,7 +18,6 @@ SOURCES += main.cpp\
     CardActor.cpp \
     Camera.cpp \
     TableBuffer.cpp \
-    CardDrawTool.cpp \
     BasicBuilder.cpp \
     BasicProgram.cpp \
     BasicBufferObject.cpp \
@@ -33,7 +32,6 @@ HEADERS  += MainWindow.hpp \
     Rotation.hpp \
     Camera.hpp \
     TableBuffer.hpp \
-    CardDrawTool.hpp \
     BasicBuilder.hpp \
     BasicProgram.hpp \
     BasicBufferObject.hpp \

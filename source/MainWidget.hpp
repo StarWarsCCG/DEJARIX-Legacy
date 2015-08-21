@@ -2,9 +2,10 @@
 #define MAINWIDGET_HPP
 
 #include "Camera.hpp"
-#include "CardDrawTool.hpp"
 #include "TableBuffer.hpp"
 #include "BasicProgram.hpp"
+#include "CardActor.hpp"
+#include "CardBuffer.hpp"
 #include "CardRotationAnimation.hpp"
 #include "CardPositionAnimation.hpp"
 #include "DeferredArray.hpp"
@@ -49,7 +50,6 @@ private:
 
     std::unique_ptr<BasicProgram> _program;
     std::unique_ptr<CardBuffer> _cardBuffer;
-    std::unique_ptr<CardDrawTool> _drawTool;
     std::unique_ptr<TableBuffer> _tableBuffer;
 
     GLint _viewport[4];

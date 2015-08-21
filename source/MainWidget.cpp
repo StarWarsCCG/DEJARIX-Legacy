@@ -48,8 +48,6 @@ void MainWidget::initializeGL()
     CardSpecifications specifications;
     CardBuilder builder(specifications);
     _cardBuffer = std::unique_ptr<CardBuffer>(new CardBuffer(builder));
-    _drawTool = std::unique_ptr<CardDrawTool>(
-        new CardDrawTool(*_program, *_cardBuffer, _projectionMatrix));
     _tableBuffer = std::unique_ptr<TableBuffer>(new TableBuffer(*this));
 
     for (int i = 0; i < 60; ++i)
@@ -90,9 +88,30 @@ void MainWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    _drawTool->bind();
+    auto& program = *_program.get();
+    auto& buffer = *_cardBuffer.get();
+    _cardBuffer->bind(program);
 
-    for (auto i : _cardActors) _drawTool->draw(i.second);
+    for (auto i : _cardActors)
+    {
+        auto actor = i.second;
+        program.setMatrix(_projectionMatrix * actor.modelViewMatrix);
+        program.setHighlight(actor.highlight);
+        program.enableTexture(false);
+        buffer.drawMiddle();
+        program.enableTexture(true);
+
+        if (actor.isTopVisible)
+        {
+            program._functions.glBindTexture(GL_TEXTURE_2D, actor.topTexture);
+            buffer.drawTop();
+        }
+        else
+        {
+            program._functions.glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
+            buffer.drawBottom();
+        }
+    }
 
     _program->enableTexture(true);
     _program->setMatrix(_projectionMatrix * _viewMatrices[CameraMatrixIndex]);
