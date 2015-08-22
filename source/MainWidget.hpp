@@ -6,6 +6,7 @@
 #include "CardRotationAnimation.hpp"
 #include "CardPositionAnimation.hpp"
 #include "CardSpecifications.hpp"
+#include "MatrixAnimation.hpp"
 #include "DeferredArray.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
@@ -55,9 +56,12 @@ private:
     RotationF _fovy;
     Camera _camera;
     QMatrix4x4 _viewMatrices[2];
+    QMatrix4x4 _colorMatrix;
     bool _isCameraRotating;
     bool _isCameraPanning;
     bool _isBlackAndWhite;
+    bool _stateChanged = true;
+    bool _stateChangeLog = true;
     QPoint _mouse;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
@@ -67,6 +71,7 @@ private:
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     std::vector<CardPositionAnimation> _cardPositionBoomerangs;
+    MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
 
     struct

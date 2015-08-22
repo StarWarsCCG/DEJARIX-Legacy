@@ -35,6 +35,10 @@ MainWidget::MainWidget(QWidget* parent)
 
     // Actual card dimensions! 63mm x 88mm
     _cardModel.specifications = {6.3f, 8.8f, 0.05f, 0.25f, 4};
+
+    _colorMatrixAnimation.stepCount = 15;
+    _colorMatrixAnimation.currentStep = 30;
+
     setMouseTracking(true);
 }
 
@@ -190,6 +194,7 @@ void MainWidget::paintGL()
         offset(3));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardModel.indexBufferObject);
+    _program.setUniformValue(_uniforms.colorMatrix, _colorMatrix);
 
     for (auto i : _cardActors)
     {
@@ -283,6 +288,7 @@ void MainWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if (_isCameraRotating)
     {
+        _stateChanged = true;
         QPoint delta = event->pos() - _mouse;
 
         _camera.rotation += RotationF::fromDegrees(float(delta.x()) / 3.0f);
@@ -306,16 +312,28 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
     {
         _isBlackAndWhite = !_isBlackAndWhite;
 
-        QMatrix4x4 BlackAndWhite(
+        QMatrix4x4 blackAndWhite(
             0.3f, 0.6f, 0.1f, 0.0f,
             0.3f, 0.6f, 0.1f, 0.0f,
             0.3f, 0.6f, 0.1f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
 
-        _program.bind();
-        _program.setUniformValue(
-            _uniforms.colorMatrix,
-            _isBlackAndWhite ? BlackAndWhite : QMatrix4x4());
+        constexpr auto S = 0.5f;
+        blackAndWhite.scale(S, S, S);
+
+        _colorMatrixAnimation.currentStep = 0;
+
+        if (_isBlackAndWhite)
+        {
+            _colorMatrixAnimation.firstMatrix = QMatrix4x4();
+            _colorMatrixAnimation.lastMatrix = blackAndWhite;
+        }
+        else
+        {
+            _colorMatrixAnimation.firstMatrix = blackAndWhite;
+            _colorMatrixAnimation.lastMatrix = QMatrix4x4();
+        }
+
         break;
     }
 
@@ -461,9 +479,22 @@ template<typename T1, typename T2> T1 Boomerang(T1 first, T1 last, T2 t)
 
 void MainWidget::onTimer()
 {
+    if (_colorMatrixAnimation.currentStep < _colorMatrixAnimation.stepCount)
+    {
+        _stateChanged = true;
+        auto t = float(_colorMatrixAnimation.currentStep++) /
+            float(_colorMatrixAnimation.stepCount);
+
+        _colorMatrix = Linear(
+            _colorMatrixAnimation.firstMatrix,
+            _colorMatrixAnimation.lastMatrix,
+            t);
+    }
+
     for (auto i = _cardRotationAnimations.begin();
          i != _cardRotationAnimations.end();)
     {
+        _stateChanged = true;
         auto& actor = _cardActors[i->cardId];
 
         if (i->currentStep < i->stepCount)
@@ -487,6 +518,7 @@ void MainWidget::onTimer()
     for (auto i = _cardFlipAnimations.begin();
          i != _cardFlipAnimations.end();)
     {
+        _stateChanged = true;
         auto& actor = _cardActors[i->cardId];
 
         if (i->currentStep < i->stepCount)
@@ -510,6 +542,7 @@ void MainWidget::onTimer()
     for (auto i = _cardPositionAnimations.begin();
          i != _cardPositionAnimations.end();)
     {
+        _stateChanged = true;
         auto& actor = _cardActors[i->cardId];
 
         if (i->currentStep < i->stepCount)
@@ -530,6 +563,7 @@ void MainWidget::onTimer()
     for (auto i = _cardPositionBoomerangs.begin();
          i != _cardPositionBoomerangs.end();)
     {
+        _stateChanged = true;
         auto& actor = _cardActors[i->cardId];
 
         if (i->currentStep < i->stepCount)
@@ -546,12 +580,26 @@ void MainWidget::onTimer()
         }
     }
 
-    _viewMatrices[CameraMatrixIndex].setToIdentity();
-    _camera.apply(_viewMatrices[CameraMatrixIndex]);
+    if (_stateChangeLog != _stateChanged)
+    {
+        if (_stateChanged)
+            qDebug() << "state changed";
+        else
+            qDebug() << "state unchanged";
 
-    for (auto& i : _cardActors) i.second.update(_viewMatrices);
+        _stateChangeLog = _stateChanged;
+    }
 
-    update();
+    if (_stateChanged)
+    {
+        _viewMatrices[CameraMatrixIndex].setToIdentity();
+        _camera.apply(_viewMatrices[CameraMatrixIndex]);
+
+        for (auto& i : _cardActors) i.second.update(_viewMatrices);
+
+        update();
+        _stateChanged = false;
+    }
 }
 
 QOpenGLTexture& MainWidget::loadImage(const QImage& image)

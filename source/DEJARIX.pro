@@ -29,4 +29,5 @@ HEADERS  += MainWindow.hpp \
     Camera.hpp \
     CardPositionAnimation.hpp \
     CardRotationAnimation.hpp \
-    DeferredArray.hpp
+    DeferredArray.hpp \
+    MatrixAnimation.hpp
