@@ -9,13 +9,6 @@
 static constexpr float TableV = 512.0f;
 static constexpr float TableT = 128.0f;
 
-static const float TableMesh[] = {
-    TableV, TableV, 0.0f, TableT, TableT,
-    TableV, -TableV, 0.0f, TableT, -TableT,
-    -TableV, -TableV, 0.0f, -TableT, -TableT,
-    -TableV, TableV, 0.0f, -TableT, TableT
-};
-
 static constexpr GLsizei Stride = sizeof(GLfloat) * 5;
 
 static constexpr GLvoid* offset(int offset)
@@ -38,7 +31,7 @@ MainWidget::MainWidget(QWidget* parent)
     _fovy = RotationF::fromDegrees(60.0f);
     _camera.distance = 32.0f;
     _camera.angle = RotationF::fromDegrees(-10.0f);
-    _cardBuffer.specifications = {6.3f, 8.8f, 0.05f, 0.25f, 4};
+    _cardModel.specifications = {6.3f, 8.8f, 0.05f, 0.25f, 4};
     setMouseTracking(true);
 }
 
@@ -47,7 +40,7 @@ MainWidget::~MainWidget()
     makeCurrent();
     _program.release();
 
-    glDeleteBuffers(_vertexBufferObjects.size(), _vertexBufferObjects.data());
+    glDeleteBuffers(_bufferObjects.size(), _bufferObjects.data());
 }
 
 void MainWidget::initializeGL()
@@ -59,11 +52,20 @@ void MainWidget::initializeGL()
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start(16);
 
+    _tableModel.texture = loadImage(QImage("../wood.jpg")).textureId();
     loadImage(QImage("../localuprising.gif"));
     loadImage(QImage("../liberation.gif"));
-    _tableBuffer.texture = loadImage(QImage("../wood.jpg")).textureId();
 
     loadCardMesh();
+
+    constexpr GLfloat TableMesh[] = {
+        TableV, TableV, 0.0f, TableT, TableT,
+        TableV, -TableV, 0.0f, TableT, -TableT,
+        -TableV, -TableV, 0.0f, -TableT, -TableT,
+        -TableV, TableV, 0.0f, -TableT, TableT
+    };
+
+    memcpy(_tableModel.mesh, TableMesh, sizeof(_tableModel.mesh));
 
     constexpr auto VertexShaderSource =
         "attribute highp vec4 position;\n"
@@ -114,16 +116,28 @@ void MainWidget::initializeGL()
 
     for (int i = 0; i < 60; ++i)
     {
-        auto z = _cardBuffer.specifications.depth / 2.0f * float(i * 2 + 1);
+        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
 
         CardActor actor;
-        actor.topTexture = _textures[0].textureId();
-        actor.bottomTexture = _textures[1].textureId();
+        actor.topTexture = _textures[1].textureId();
+        actor.bottomTexture = _textures[2].textureId();
         actor.position = QVector3D(0.0f, 0.0f, z);
 
         //actor.rotation = RotationF::fromDegrees(90.0f);
 
         _cardActors[i] = actor;
+    }
+
+    for (int i = 0; i < 60; ++i)
+    {
+        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
+
+        CardActor actor;
+        actor.topTexture = _textures[1].textureId();
+        actor.bottomTexture = _textures[2].textureId();
+        actor.position = QVector3D(8.0f, 0.0f, z);
+
+        _cardActors[i + 60] = actor;
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -151,7 +165,7 @@ void MainWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _cardBuffer.vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, _cardModel.vertexBufferObject);
 
     glVertexAttribPointer(
         _attributes.position,
@@ -169,7 +183,7 @@ void MainWidget::paintGL()
         Stride,
         offset(3));
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardBuffer.indexBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardModel.indexBufferObject);
 
     for (auto i : _cardActors)
     {
@@ -177,13 +191,14 @@ void MainWidget::paintGL()
         _program.setUniformValue(
             _uniforms.matrix, _projectionMatrix * actor.modelViewMatrix);
         _program.setUniformValue(_uniforms.highlight, actor.highlight);
-
         _program.setUniformValue(_uniforms.enableTexture, false);
+
         glDrawElements(
             GL_TRIANGLES,
-            _cardBuffer.middleCount,
+            _cardModel.middleCount,
             GL_UNSIGNED_SHORT,
-            _cardBuffer.middleOffset);
+            _cardModel.middleOffset);
+
         _program.setUniformValue(_uniforms.enableTexture, true);
 
         if (actor.isTopVisible)
@@ -191,7 +206,7 @@ void MainWidget::paintGL()
             glBindTexture(GL_TEXTURE_2D, actor.topTexture);
             glDrawElements(
                 GL_TRIANGLES,
-                _cardBuffer.topCount,
+                _cardModel.topCount,
                 GL_UNSIGNED_SHORT,
                 nullptr);
         }
@@ -200,17 +215,19 @@ void MainWidget::paintGL()
             glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
             glDrawElements(
                 GL_TRIANGLES,
-                _cardBuffer.bottomCount,
+                _cardModel.bottomCount,
                 GL_UNSIGNED_SHORT,
-                _cardBuffer.bottomOffset);
+                _cardModel.bottomOffset);
         }
     }
 
     _program.setUniformValue(_uniforms.enableTexture, true);
     _program.setUniformValue(
-        _uniforms.matrix, _projectionMatrix * _viewMatrices[CameraMatrixIndex]);
+        _uniforms.matrix,
+        _projectionMatrix * _viewMatrices[CameraMatrixIndex]);
     _program.setUniformValue(_uniforms.highlight, QVector4D());
-    _textures[2].bind();
+
+    glBindTexture(GL_TEXTURE_2D, _tableModel.texture);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexAttribPointer(
@@ -219,7 +236,7 @@ void MainWidget::paintGL()
         GL_FLOAT,
         GL_FALSE,
         Stride,
-        TableMesh);
+        _tableModel.mesh);
 
     glVertexAttribPointer(
         _attributes.texture,
@@ -227,7 +244,7 @@ void MainWidget::paintGL()
         GL_FLOAT,
         GL_FALSE,
         Stride,
-        TableMesh + 3);
+        _tableModel.mesh + 3);
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -294,7 +311,17 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_W:
     {
-
+        std::uniform_int_distribution<int> distribution(15, 45);
+        for (int i = 0; i < 120; ++i)
+        {
+            auto actor = _cardActors[i];
+            _cardPositionAnimations.push_back({
+                i,
+                actor.position,
+                actor.position + QVector3D(5.0f, 0.0f, 0.0f),
+                distribution(_mt),
+                0});
+        }
         break;
     }
 
@@ -330,7 +357,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         int n = distribution(_mt);
 
         QVector3D bounce(
-            0.0f, 0.0f, _cardBuffer.specifications.width / 2.0f);
+            0.0f, 0.0f, _cardModel.specifications.width / 2.0f);
         auto actor = _cardActors[n];
         auto flip = actor.flip.toRadians();
         _cardPositionBoomerangs.push_back({
@@ -369,10 +396,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
     case Qt::Key_G:
     {
         auto& actor = _cardActors[3];
-        auto lastPosition = QVector3D(
-            actor.position.x() + 2.0f,
-            actor.position.y() + 8.0f,
-            actor.position.z() + 2.0f);
+        auto lastPosition =
+            actor.position + QVector3D(2.0f, 8.0f, 2.0f);
         _cardPositionBoomerangs.push_back(
             { 3, actor.position, lastPosition, 30, 0 });
         break;
@@ -501,8 +526,7 @@ void MainWidget::onTimer()
     _viewMatrices[CameraMatrixIndex].setToIdentity();
     _camera.apply(_viewMatrices[CameraMatrixIndex]);
 
-    for (auto& i : _cardActors)
-        i.second.update(_viewMatrices);
+    for (auto& i : _cardActors) i.second.update(_viewMatrices);
 
     update();
 }
@@ -563,32 +587,32 @@ QOpenGLTexture& MainWidget::loadText(const QString& text)
 
 GLuint MainWidget::loadMesh(const std::vector<GLfloat>& data)
 {
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    GLuint object;
+    glGenBuffers(1, &object);
+    glBindBuffer(GL_ARRAY_BUFFER, object);
     glBufferData(
         GL_ARRAY_BUFFER,
         data.size() * sizeof(GLfloat),
         data.data(),
         GL_STATIC_DRAW);
 
-    _vertexBufferObjects.push_back(vbo);
-    return vbo;
+    _bufferObjects.push_back(object);
+    return object;
 }
 
 GLuint MainWidget::loadIndexBuffer(const std::vector<GLushort>& data)
 {
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo);
+    GLuint object;
+    glGenBuffers(1, &object);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER,
         data.size() * sizeof(GLushort),
         data.data(),
         GL_STATIC_DRAW);
 
-    _vertexBufferObjects.push_back(vbo);
-    return vbo;
+    _bufferObjects.push_back(object);
+    return object;
 }
 
 void MainWidget::loadCardMesh()
@@ -601,7 +625,7 @@ void MainWidget::loadCardMesh()
 
     auto addVertex = [&](float x, float y, float s, float t)
     {
-        float z = _cardBuffer.specifications.depth / 2.0f;
+        float z = _cardModel.specifications.depth / 2.0f;
 
         vertices.push_back(x);
         vertices.push_back(y);
@@ -646,7 +670,7 @@ void MainWidget::loadCardMesh()
         addTriangles(a, c, d);
     };
 
-    auto specifications = _cardBuffer.specifications;
+    auto specifications = _cardModel.specifications;
 
     float w = specifications.width / 2.0f;
     float h = specifications.height / 2.0f;
@@ -829,13 +853,13 @@ void MainWidget::loadCardMesh()
     for (auto index : middleIndices) indices.push_back(index);
     for (auto index : bottomIndices) indices.push_back(index);
 
-    _cardBuffer.vertexBufferObject = loadMesh(mesh);
-    _cardBuffer.indexBufferObject = loadIndexBuffer(indices);
-    _cardBuffer.topCount = topIndices.size();
-    _cardBuffer.middleCount = middleIndices.size();
-    _cardBuffer.bottomCount = bottomIndices.size();
-    _cardBuffer.middleOffset = (GLushort*)0 + topIndices.size();
-    _cardBuffer.bottomOffset = _cardBuffer.middleOffset + middleIndices.size();
+    _cardModel.vertexBufferObject = loadMesh(mesh);
+    _cardModel.indexBufferObject = loadIndexBuffer(indices);
+    _cardModel.topCount = topIndices.size();
+    _cardModel.middleCount = middleIndices.size();
+    _cardModel.bottomCount = bottomIndices.size();
+    _cardModel.middleOffset = (GLushort*)0 + topIndices.size();
+    _cardModel.bottomOffset = _cardModel.middleOffset + middleIndices.size();
 }
 
 void MainWidget::dump()

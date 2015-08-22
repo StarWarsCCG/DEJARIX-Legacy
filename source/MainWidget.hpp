@@ -28,20 +28,20 @@ public:
     virtual ~MainWidget();
 
     void dump();
-    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void keyPressEvent(QKeyEvent* event) override;
 
 protected slots:
     void onTimer();
 
 protected:
-    virtual void initializeGL();
-    virtual void resizeGL(int w, int h);
-    virtual void paintGL();
+    virtual void initializeGL() override;
+    virtual void resizeGL(int w, int h) override;
+    virtual void paintGL() override;
 
-    virtual void mousePressEvent(QMouseEvent* event);
-    virtual void mouseReleaseEvent(QMouseEvent* event);
-    virtual void mouseMoveEvent(QMouseEvent* event);
-    virtual void wheelEvent(QWheelEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
     QOpenGLTexture& loadImage(const QImage& image);
@@ -60,7 +60,7 @@ private:
     QPoint _mouse;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
-    std::vector<GLuint> _vertexBufferObjects;
+    std::vector<GLuint> _bufferObjects;
     std::unordered_map<int, CardActor> _cardActors;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
@@ -92,12 +92,13 @@ private:
         GLsizei bottomCount;
         GLushort* middleOffset;
         GLushort* bottomOffset;
-    } _cardBuffer;
+    } _cardModel;
 
     struct
     {
         GLuint texture;
-    } _tableBuffer;
+        GLfloat mesh[20];
+    } _tableModel;
 
     QOpenGLShaderProgram _program;
 };
