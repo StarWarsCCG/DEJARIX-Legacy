@@ -302,6 +302,7 @@ void MainWidget::wheelEvent(QWheelEvent* event)
 {
     const float Delta = 3.0f;
     _camera.distance += event->delta() > 0 ? -Delta : Delta;
+    _stateChanged = true;
 }
 
 void MainWidget::keyPressEvent(QKeyEvent* event)
@@ -479,7 +480,7 @@ template<typename T1, typename T2> T1 Boomerang(T1 first, T1 last, T2 t)
 
 void MainWidget::onTimer()
 {
-    if (_colorMatrixAnimation.currentStep < _colorMatrixAnimation.stepCount)
+    if (_colorMatrixAnimation.currentStep <= _colorMatrixAnimation.stepCount)
     {
         _stateChanged = true;
         auto t = float(_colorMatrixAnimation.currentStep++) /
