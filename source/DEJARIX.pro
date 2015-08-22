@@ -10,8 +10,10 @@ TARGET = DEJARIX
 TEMPLATE = app
 CONFIG += c++11
 
-QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
-QMAKE_LFLAGS += -fsanitize=address
+!macx {
+    QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+    QMAKE_LFLAGS += -fsanitize=address
+}
 
 SOURCES += main.cpp\
         MainWindow.cpp \
