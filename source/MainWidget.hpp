@@ -46,7 +46,6 @@ protected:
 private:
     QOpenGLTexture& loadImage(const QImage& image);
     QOpenGLTexture& loadText(const QString& text);
-    void bind(GLuint vbo);
     GLuint loadMesh(const std::vector<GLfloat>& data);
     GLuint loadIndexBuffer(const std::vector<GLushort>& data);
     void loadCardMesh();

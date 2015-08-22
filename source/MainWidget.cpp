@@ -63,11 +63,9 @@ void MainWidget::initializeGL()
     loadImage(QImage("../liberation.gif"));
     _tableBuffer.texture = loadImage(QImage("../wood.jpg")).textureId();
 
-
-
     loadCardMesh();
 
-    auto vertexShaderSource =
+    constexpr auto VertexShaderSource =
         "attribute highp vec4 position;\n"
         "attribute lowp vec2 tc;\n"
         "varying lowp vec2 vtc;\n"
@@ -77,7 +75,7 @@ void MainWidget::initializeGL()
         "   gl_Position = matrix * position;\n"
         "}\n";
 
-    auto fragmentShaderSource =
+    constexpr auto FragmentShaderSource =
 #ifdef Q_OS_WIN
         // This produces a warning in Linux:
         // warning C7022: unrecognized profile specifier "precision"
@@ -97,10 +95,10 @@ void MainWidget::initializeGL()
 
     _program.addShaderFromSourceCode(
         QOpenGLShader::Vertex,
-        vertexShaderSource);
+        VertexShaderSource);
     _program.addShaderFromSourceCode(
         QOpenGLShader::Fragment,
-        fragmentShaderSource);
+        FragmentShaderSource);
 
     _program.link();
     _program.bind();
@@ -153,7 +151,24 @@ void MainWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    bind(_cardBuffer.vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, _cardBuffer.vertexBufferObject);
+
+    glVertexAttribPointer(
+        _attributes.position,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        offset(0));
+
+    glVertexAttribPointer(
+        _attributes.texture,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        Stride,
+        offset(3));
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardBuffer.indexBufferObject);
 
     for (auto i : _cardActors)
@@ -544,27 +559,6 @@ QOpenGLTexture& MainWidget::loadText(const QString& text)
     painter.setPen(Qt::green);
     painter.drawText(image.rect(), Qt::AlignCenter, text);
     return loadImage(image);
-}
-
-void MainWidget::bind(GLuint vbo)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    glVertexAttribPointer(
-        _attributes.position,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        Stride,
-        offset(0));
-
-    glVertexAttribPointer(
-        _attributes.texture,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        Stride,
-        offset(3));
 }
 
 GLuint MainWidget::loadMesh(const std::vector<GLfloat>& data)
