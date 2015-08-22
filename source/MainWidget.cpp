@@ -601,17 +601,17 @@ void MainWidget::loadCardMesh()
 
     auto addVertex = [&](float x, float y, float s, float t)
     {
-        float d = _cardBuffer.specifications.depth / 2.0f;
+        float z = _cardBuffer.specifications.depth / 2.0f;
 
         vertices.push_back(x);
         vertices.push_back(y);
-        vertices.push_back(d);
+        vertices.push_back(z);
         textureCoordinates.push_back(s);
         textureCoordinates.push_back(t);
 
         vertices.push_back(x);
         vertices.push_back(y);
-        vertices.push_back(-d);
+        vertices.push_back(-z);
         textureCoordinates.push_back(1.0f - s);
         textureCoordinates.push_back(t);
     };
@@ -811,14 +811,14 @@ void MainWidget::loadCardMesh()
 
     for (int i = 0; i < vertexCount; ++i)
     {
-        int v = i * 3;
-        mesh.push_back(vertices[v + 0]);
-        mesh.push_back(vertices[v + 1]);
-        mesh.push_back(vertices[v + 2]);
+        int vi = i * 3;
+        mesh.push_back(vertices[vi + 0]);
+        mesh.push_back(vertices[vi + 1]);
+        mesh.push_back(vertices[vi + 2]);
 
-        int t = i * 2;
-        mesh.push_back(textureCoordinates[t + 0]);
-        mesh.push_back(textureCoordinates[t + 1]);
+        int ti = i * 2;
+        mesh.push_back(textureCoordinates[ti + 0]);
+        mesh.push_back(textureCoordinates[ti + 1]);
     }
 
     std::vector<GLushort> indices;
@@ -834,9 +834,8 @@ void MainWidget::loadCardMesh()
     _cardBuffer.topCount = topIndices.size();
     _cardBuffer.middleCount = middleIndices.size();
     _cardBuffer.bottomCount = bottomIndices.size();
-    _cardBuffer.middleOffset = offset(topIndices.size());
-    _cardBuffer.bottomOffset =
-        (GLushort*)_cardBuffer.middleOffset + middleIndices.size();
+    _cardBuffer.middleOffset = (GLushort*)0 + topIndices.size();
+    _cardBuffer.bottomOffset = _cardBuffer.middleOffset + middleIndices.size();
 }
 
 void MainWidget::dump()

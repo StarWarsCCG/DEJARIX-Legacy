@@ -90,8 +90,8 @@ private:
         GLsizei topCount;
         GLsizei middleCount;
         GLsizei bottomCount;
-        GLvoid* middleOffset;
-        GLvoid* bottomOffset;
+        GLushort* middleOffset;
+        GLushort* bottomOffset;
     } _cardBuffer;
 
     struct
