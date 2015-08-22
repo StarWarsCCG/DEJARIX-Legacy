@@ -27,10 +27,13 @@ MainWidget::MainWidget(QWidget* parent)
     : QOpenGLWidget(parent)
     , _isCameraRotating(false)
     , _isCameraPanning(false)
+    , _isBlackAndWhite(false)
 {
     _fovy = RotationF::fromDegrees(60.0f);
     _camera.distance = 32.0f;
     _camera.angle = RotationF::fromDegrees(-10.0f);
+
+    // Actual card dimensions! 63mm x 88mm
     _cardModel.specifications = {6.3f, 8.8f, 0.05f, 0.25f, 4};
     setMouseTracking(true);
 }
@@ -86,13 +89,14 @@ void MainWidget::initializeGL()
         //"precision highp float;\n"
 #endif
         "uniform bool enableTexture;\n"
+        "uniform highp mat4 colorMatrix;\n"
         "uniform sampler2D texture;\n"
         "uniform lowp vec4 highlight;\n"
         "varying lowp vec2 vtc;\n"
         "void main() {\n"
         "   vec4 result = vec4(0.0, 0.0, 0.0, 1.0);\n"
         "   if (enableTexture) result = texture2D(texture, vtc);\n"
-        "   gl_FragColor = result + highlight;\n"
+        "   gl_FragColor = colorMatrix * (result + highlight);\n"
         "}\n";
 
     _program.addShaderFromSourceCode(
@@ -107,10 +111,12 @@ void MainWidget::initializeGL()
     _attributes.position = _program.attributeLocation("position");
     _attributes.texture = _program.attributeLocation("tc");
     _uniforms.matrix = _program.uniformLocation("matrix");
+    _uniforms.colorMatrix = _program.uniformLocation("colorMatrix");
     _uniforms.texture = _program.uniformLocation("texture");
     _uniforms.highlight = _program.uniformLocation("highlight");
     _uniforms.enableTexture = _program.uniformLocation("enableTexture");
     _program.setUniformValue(_uniforms.texture, 0);
+    _program.setUniformValue(_uniforms.colorMatrix, QMatrix4x4());
     _program.setUniformValue(_uniforms.enableTexture, true);
     _program.setUniformValue(_uniforms.highlight, QVector4D());
 
@@ -296,6 +302,23 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
+    case Qt::Key_Tab:
+    {
+        _isBlackAndWhite = !_isBlackAndWhite;
+
+        QMatrix4x4 BlackAndWhite(
+            0.3f, 0.6f, 0.1f, 0.0f,
+            0.3f, 0.6f, 0.1f, 0.0f,
+            0.3f, 0.6f, 0.1f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+
+        _program.bind();
+        _program.setUniformValue(
+            _uniforms.colorMatrix,
+            _isBlackAndWhite ? BlackAndWhite : QMatrix4x4());
+        break;
+    }
+
     case Qt::Key_Q:
     {
         for (int i = 0; i < 60; ++i)

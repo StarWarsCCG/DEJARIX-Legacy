@@ -57,6 +57,7 @@ private:
     QMatrix4x4 _viewMatrices[2];
     bool _isCameraRotating;
     bool _isCameraPanning;
+    bool _isBlackAndWhite;
     QPoint _mouse;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
@@ -70,16 +71,17 @@ private:
 
     struct
     {
-        GLuint position;
-        GLuint texture;
+        int position;
+        int texture;
     } _attributes;
 
     struct
     {
-        GLuint matrix;
-        GLuint texture;
-        GLuint highlight;
-        GLuint enableTexture;
+        int matrix;
+        int colorMatrix;
+        int texture;
+        int highlight;
+        int enableTexture;
     } _uniforms;
 
     struct
