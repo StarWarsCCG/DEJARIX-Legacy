@@ -18,7 +18,7 @@ ChatWidget::ChatWidget(QWidget* parent)
 
 void ChatWidget::sendChat()
 {
-    qDebug() << "send:" << _line.text();
-    _line.setText(QString());
+    _text.append(_line.text().toHtmlEscaped());
+    _line.clear();
 }
 

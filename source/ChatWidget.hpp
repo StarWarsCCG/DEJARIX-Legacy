@@ -20,6 +20,8 @@ class ChatWidget : public QWidget
 public:
     explicit ChatWidget(QWidget* parent = nullptr);
 
+    inline void focusChat() { _line.setFocus(); }
+
 signals:
 
 private slots:

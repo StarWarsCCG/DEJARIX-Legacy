@@ -28,8 +28,11 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
-    case Qt::Key_F11:
     case Qt::Key_Backslash:
+        _chat.focusChat();
+        break;
+
+    case Qt::Key_F11:
         if (isFullScreen())
             showNormal();
         else
