@@ -29,6 +29,8 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     switch (event->key())
     {
     case Qt::Key_Backslash:
+        if (_dock.isHidden()) _dock.show();
+        if (_chat.isHidden()) _chat.show();
         _chat.focusChat();
         break;
 

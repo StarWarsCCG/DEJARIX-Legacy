@@ -11,10 +11,6 @@ static constexpr float TableT = 128.0f;
 
 static constexpr GLsizei Stride = sizeof(GLfloat) * 5;
 
-static constexpr GLvoid* offset(int offset)
-{
-    return (GLfloat*)0 + offset;
-}
 
 static float findDistance(RotationF fov, float height)
 {
@@ -124,31 +120,7 @@ void MainWidget::initializeGL()
     _program.setUniformValue(_uniforms.enableTexture, true);
     _program.setUniformValue(_uniforms.highlight, QVector4D());
 
-    for (int i = 0; i < 60; ++i)
-    {
-        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
-
-        CardActor actor;
-        actor.topTexture = _textures[1].textureId();
-        actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(0.0f, 0.0f, z);
-
-        //actor.rotation = RotationF::fromDegrees(90.0f);
-
-        _cardActors[i] = actor;
-    }
-
-    for (int i = 0; i < 60; ++i)
-    {
-        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
-
-        CardActor actor;
-        actor.topTexture = _textures[1].textureId();
-        actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(8.0f, 0.0f, z);
-
-        _cardActors[i + 60] = actor;
-    }
+    resetCards();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -184,7 +156,7 @@ void MainWidget::paintGL()
         GL_FLOAT,
         GL_FALSE,
         Stride,
-        offset(0));
+        nullptr);
 
     glVertexAttribPointer(
         _attributes.texture,
@@ -192,7 +164,7 @@ void MainWidget::paintGL()
         GL_FLOAT,
         GL_FALSE,
         Stride,
-        offset(3));
+        (GLfloat*)0 + 3);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardModel.indexBufferObject);
     _program.setUniformValue(_uniforms.colorMatrix, _colorMatrix);
@@ -306,10 +278,45 @@ void MainWidget::wheelEvent(QWheelEvent* event)
     _stateChanged = true;
 }
 
+void MainWidget::resetCards()
+{
+    for (int i = 0; i < 60; ++i)
+    {
+        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
+
+        CardActor actor;
+        actor.topTexture = _textures[1].textureId();
+        actor.bottomTexture = _textures[2].textureId();
+        actor.position = QVector3D(0.0f, 0.0f, z);
+
+        //actor.rotation = RotationF::fromDegrees(90.0f);
+
+        _cardActors[i] = actor;
+    }
+
+    for (int i = 0; i < 60; ++i)
+    {
+        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
+
+        CardActor actor;
+        actor.topTexture = _textures[1].textureId();
+        actor.bottomTexture = _textures[2].textureId();
+        actor.position = QVector3D(8.0f, 0.0f, z);
+
+        _cardActors[i + 60] = actor;
+    }
+
+    _stateChanged = true;
+}
+
 void MainWidget::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
+    case Qt::Key_F5:
+        resetCards();
+        break;
+
     case Qt::Key_Tab:
     {
         _isBlackAndWhite = !_isBlackAndWhite;
@@ -358,12 +365,17 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         for (int i = 0; i < 120; ++i)
         {
             auto actor = _cardActors[i];
-            _cardPositionAnimations.push_back({
-                i,
-                actor.position,
-                actor.position + QVector3D(5.0f, 0.0f, 0.0f),
-                distribution(_mt),
-                0});
+            CardPositionAnimation cpa;
+            cpa.cardId = i;
+            cpa.control.points[0] = actor.position;
+            cpa.control.points[1] =
+                actor.position + QVector3D(2.5f, 1.0f, 0.0f);
+            cpa.control.points[2] =
+                actor.position + QVector3D(5.0f, 0.0f, 0.0f);
+            cpa.stepCount = distribution(_mt);
+            cpa.currentStep = 0;
+
+            _cardPositionAnimations.push_back(cpa);
         }
         break;
     }
@@ -400,24 +412,32 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         int n = distribution(_mt);
 
         QVector3D bounce(
-            0.0f, 0.0f, _cardModel.specifications.width / 2.0f);
+            0.0f, 0.0f, _cardModel.specifications.width);
         auto actor = _cardActors[n];
-        auto flip = actor.flip.toRadians();
-        _cardPositionBoomerangs.push_back({
-            n,
-            actor.position,
-            actor.position + bounce,
-            30,
-            0});
 
+        CardPositionAnimation cpa;
+        cpa.cardId = n;
+        cpa.control.points[0] = actor.position;
+        cpa.control.points[1] = actor.position + bounce;
+        cpa.control.points[2] = actor.position;
+        cpa.stepCount = 30;
+        cpa.currentStep = 0;
+
+        _cardPositionAnimations.push_back(cpa);
+
+        auto flip = actor.flip.toRadians();
         _cardFlipAnimations.push_back(
             {n, flip, flip + pi<float>(), 0.0f, 30, 0});
 
         for (int i = n + 1; i < 60; ++i)
         {
             actor = _cardActors[i];
-            _cardPositionBoomerangs.push_back(
-                {i, actor.position, actor.position + bounce * 2.0f, 30, 0});
+            cpa.cardId = i;
+            cpa.control.points[0] = actor.position;
+            cpa.control.points[1] = actor.position + bounce * 2.0f;
+            cpa.control.points[2] = actor.position;
+
+            _cardPositionAnimations.push_back(cpa);
         }
 
         break;
@@ -425,58 +445,44 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_F:
     {
-        auto& actor = _cardActors[2];
+        auto actor = _cardActors[2];
         auto lastPosition = QVector3D(
             actor.position.x(),
             16.0f - actor.position.y(),
             actor.position.z());
-        _cardPositionAnimations.push_back(
-            { 2, actor.position, lastPosition, 30, 0 });
+
+        CardPositionAnimation cpa;
+        cpa.cardId = 2;
+        cpa.control.points[0] = actor.position;
+        cpa.control.points[1] = Linear(actor.position, lastPosition, 1.25f);
+        cpa.control.points[2] = lastPosition;
+        cpa.stepCount = 30;
+        cpa.currentStep = 0;
+
+        _cardPositionAnimations.push_back(cpa);
 
         break;
     }
 
     case Qt::Key_G:
     {
-        auto& actor = _cardActors[3];
-        auto lastPosition =
-            actor.position + QVector3D(2.0f, 8.0f, 2.0f);
-        _cardPositionBoomerangs.push_back(
-            { 3, actor.position, lastPosition, 30, 0 });
+        auto actor = _cardActors[59];
+
+        CardPositionAnimation cpa;
+        cpa.cardId = 59;
+        cpa.control.points[0] = actor.position;
+        cpa.control.points[1] = QVector3D(-6.0f, 4.0f, 8.0f);
+        cpa.control.points[2] = QVector3D(-12.0f, 0.0f, _cardModel.specifications.depth / 2.0f);
+        cpa.stepCount = 15;
+        cpa.currentStep = 0;
+
+        _cardPositionAnimations.push_back(cpa);
         break;
     }
 
     default:
         break;
     }
-}
-
-template<typename T1, typename T2> T1 Linear(T1 first, T1 last, T2 t)
-{
-    auto difference = last - first;
-    return difference * t + first;
-}
-
-template<typename T1, typename T2> T1 Overshoot(
-    T1 first, T1 last, T2 magnitude, T2 t)
-{
-    auto difference = last - first;
-
-    return
-        difference * t + first - sin(t * tau<T2>()) * magnitude * difference;
-}
-
-template<typename T1, typename T2> T1 SCurve(T1 first, T1 last, T2 t)
-{
-    auto difference = last - first;
-    auto tt = (T2(1) - cos(t * pi<T2>())) * T2(0.5);
-    return difference * tt + first;
-}
-
-template<typename T1, typename T2> T1 Boomerang(T1 first, T1 last, T2 t)
-{
-    auto tt = sin(t * pi<T2>());
-    return Linear(first, last, tt);
 }
 
 void MainWidget::onTimer()
@@ -551,34 +557,15 @@ void MainWidget::onTimer()
         {
             auto t = float(i->currentStep++) / float(i->stepCount);
             //actor.position = Linear(i->firstPosition, i->lastPosition, t);
-            actor.position = SCurve(i->firstPosition, i->lastPosition, t);
+            actor.position = Interpolate(i->control, t);
+            //actor.position = SCurve(i->firstPosition, i->lastPosition, t);
 
             ++i;
         }
         else
         {
-            actor.position = i->lastPosition;
+            actor.position = i->control.points[2];
             i = _cardPositionAnimations.erase(i);
-        }
-    }
-
-    for (auto i = _cardPositionBoomerangs.begin();
-         i != _cardPositionBoomerangs.end();)
-    {
-        _stateChanged = true;
-        auto& actor = _cardActors[i->cardId];
-
-        if (i->currentStep < i->stepCount)
-        {
-            auto t = float(i->currentStep++) / float(i->stepCount);
-            actor.position = Boomerang(i->firstPosition, i->lastPosition, t);
-
-            ++i;
-        }
-        else
-        {
-            actor.position = i->firstPosition;
-            i = _cardPositionBoomerangs.erase(i);
         }
     }
 

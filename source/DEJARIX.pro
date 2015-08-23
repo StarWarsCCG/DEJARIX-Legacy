@@ -32,4 +32,5 @@ HEADERS  += MainWindow.hpp \
     CardRotationAnimation.hpp \
     DeferredArray.hpp \
     MatrixAnimation.hpp \
-    ChatWidget.hpp
+    ChatWidget.hpp \
+    Curves.hpp

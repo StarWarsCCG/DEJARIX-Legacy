@@ -45,6 +45,7 @@ protected:
     virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
+    void resetCards();
     QOpenGLTexture& loadImage(const QImage& image);
     QOpenGLTexture& loadText(const QString& text);
     GLuint loadMesh(const std::vector<GLfloat>& data);
@@ -70,7 +71,6 @@ private:
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
-    std::vector<CardPositionAnimation> _cardPositionBoomerangs;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
 

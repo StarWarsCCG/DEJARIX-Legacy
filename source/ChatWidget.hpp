@@ -17,6 +17,8 @@ class ChatWidget : public QWidget
     QLineEdit _line;
     QPushButton _sendButton;
 
+    void append(const QString& text, const QColor& color);
+
 public:
     explicit ChatWidget(QWidget* parent = nullptr);
 
@@ -25,6 +27,7 @@ public:
 signals:
 
 private slots:
+    void pressReturn();
     void sendChat();
 };
 
