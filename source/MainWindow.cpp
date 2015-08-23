@@ -1,8 +1,11 @@
 #include "MainWindow.hpp"
 #include <QKeyEvent>
 #include <QDir>
+#include <QPushButton>
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent)
+    , _dock(tr("Chat"))
 {
 #ifdef Q_OS_MAC
     qDebug() << QDir::currentPath();
@@ -11,6 +14,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 #endif
 
     setCentralWidget(&_mainWidget);
+    _dock.setWidget(&_chat);
+    addDockWidget(Qt::RightDockWidgetArea, &_dock);
     setWindowTitle("DEJARIX");
     resize(1024, 768);
 }

@@ -164,6 +164,7 @@ void MainWidget::initializeGL()
 
 void MainWidget::resizeGL(int w, int h)
 {
+    _stateChanged = true;
     float ratio = float(w) / float(h);
     _projectionMatrix.setToIdentity();
     _projectionMatrix.perspective(_fovy.toDegrees(), ratio, 1.0f, 1024.0f);

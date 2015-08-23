@@ -19,7 +19,8 @@ SOURCES += main.cpp\
         MainWindow.cpp \
     MainWidget.cpp \
     CardActor.cpp \
-    Camera.cpp
+    Camera.cpp \
+    ChatWidget.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -30,4 +31,5 @@ HEADERS  += MainWindow.hpp \
     CardPositionAnimation.hpp \
     CardRotationAnimation.hpp \
     DeferredArray.hpp \
-    MatrixAnimation.hpp
+    MatrixAnimation.hpp \
+    ChatWidget.hpp

@@ -25,7 +25,7 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
     Q_OBJECT
 
 public:
-    explicit MainWidget(QWidget* parent = 0);
+    explicit MainWidget(QWidget* parent = nullptr);
     virtual ~MainWidget();
 
     void dump();
