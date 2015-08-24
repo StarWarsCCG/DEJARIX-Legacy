@@ -317,7 +317,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         resetCards();
         break;
 
-    case Qt::Key_Tab:
+    case Qt::Key_F6:
     {
         _isBlackAndWhite = !_isBlackAndWhite;
 
