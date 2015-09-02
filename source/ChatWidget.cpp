@@ -1,44 +1,50 @@
 #include "ChatWidget.hpp"
 #include <QDebug>
 
-void ChatWidget::append(const QString& text, const QColor& color)
+void ChatWidget::append(QString text, QColor color)
 {
-    _text.setTextColor(color);
-    _text.append(text.toHtmlEscaped());
+    _textBox.setTextColor(color);
+    _textBox.append(text.toHtmlEscaped());
 }
 
 ChatWidget::ChatWidget(QWidget* parent)
     : QWidget(parent)
     , _sendButton("Send")
 {
-    _text.setTextColor(QColor(255, 0, 0));
-    QPalette p = _text.palette();
+    _textBox.setTextColor(QColor(255, 0, 0));
+    QPalette p = _textBox.palette();
     p.setColor(QPalette::Base, QColor(0, 0, 0));
-    _text.setPalette(p);
+    _textBox.setPalette(p);
 
-    _lineLayout.addWidget(&_line);
+    _lineLayout.addWidget(&_lineEdit);
     _lineLayout.addWidget(&_sendButton);
 
-    _layout.addWidget(&_text);
+    _layout.addWidget(&_textBox);
     _layout.addLayout(&_lineLayout);
     setLayout(&_layout);
 
-    connect(&_line, SIGNAL(returnPressed()), this, SLOT(pressReturn()));
+    connect(&_lineEdit, SIGNAL(returnPressed()), this, SLOT(sendChat()));
     connect(&_sendButton, SIGNAL(clicked(bool)), this, SLOT(sendChat()));
 }
 
-void ChatWidget::pressReturn()
+void ChatWidget::focusInEvent(QFocusEvent* e)
 {
-    if (_line.text().size() > 0)
-        sendChat();
-    else
-        clearFocus(), qDebug("hi");
+    Q_UNUSED(e);
 }
 
 void ChatWidget::sendChat()
 {
-    _text.append(_line.text().toHtmlEscaped());
-    _line.clear();
-    _text.setTextColor(QColor(0, 255, 0));
+    QString text = _lineEdit.text();
+
+    if (text.length() > 0)
+    {
+        _textBox.append(text.toHtmlEscaped());
+        _lineEdit.clear();
+        _textBox.setTextColor(QColor(0, 255, 0));
+    }
+    else
+    {
+        emit emptyChatSent();
+    }
 }
 

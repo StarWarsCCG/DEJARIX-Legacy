@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QDockWidget>
+#include <QTabWidget>
 #include "MainWidget.hpp"
 #include "ChatWidget.hpp"
 
@@ -12,7 +13,10 @@ class MainWindow : public QMainWindow
 
     MainWidget _mainWidget;
     QDockWidget _dock;
-    ChatWidget _chat;
+    QTabWidget _chatTabs;
+    ChatWidget _playerChat;
+    ChatWidget _publicChat;
+    int _unreadChats = 0;
 
 public:
     MainWindow(QWidget* parent = 0);

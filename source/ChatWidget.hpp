@@ -6,6 +6,8 @@
 #include <QTextBrowser>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QTimer>
+#include <QFocusEvent>
 
 class ChatWidget : public QWidget
 {
@@ -13,21 +15,23 @@ class ChatWidget : public QWidget
 
     QVBoxLayout _layout;
     QHBoxLayout _lineLayout;
-    QTextBrowser _text;
-    QLineEdit _line;
+    QTextBrowser _textBox;
+    QLineEdit _lineEdit;
     QPushButton _sendButton;
 
-    void append(const QString& text, const QColor& color);
+    void append(QString text, QColor color);
 
 public:
     explicit ChatWidget(QWidget* parent = nullptr);
 
-    inline void focusChat() { _line.setFocus(); }
+    inline void focusChat() { _lineEdit.setFocus(); }
+
+    virtual void focusInEvent(QFocusEvent* e);
 
 signals:
+    void emptyChatSent();
 
 private slots:
-    void pressReturn();
     void sendChat();
 };
 

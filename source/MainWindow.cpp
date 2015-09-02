@@ -13,8 +13,16 @@ MainWindow::MainWindow(QWidget* parent)
     qDebug() << QDir::currentPath();
 #endif
 
+    setFocusPolicy(Qt::WheelFocus);
+
+    connect(&_playerChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
+    connect(&_publicChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
+
+    _chatTabs.addTab(&_playerChat, "Players");
+    _chatTabs.addTab(&_publicChat, "Spectators");
+
     setCentralWidget(&_mainWidget);
-    _dock.setWidget(&_chat);
+    _dock.setWidget(&_chatTabs);
     addDockWidget(Qt::RightDockWidgetArea, &_dock);
     setWindowTitle("DEJARIX");
     resize(1024, 768);
@@ -29,9 +37,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     switch (event->key())
     {
     case Qt::Key_Backslash:
+    //case Qt::Key_Enter:
+    //case Qt::Key_Return:
+        qDebug() << "wat";
         if (_dock.isHidden()) _dock.show();
-        if (_chat.isHidden()) _chat.show();
-        _chat.focusChat();
+        _chatTabs.setCurrentIndex(0);
+        _playerChat.focusChat();
         break;
 
     case Qt::Key_F11:
@@ -52,6 +63,8 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_Space:
         _mainWidget.dump();
+
+        _chatTabs.setTabText(1, "Spectators (13)");
         break;
 
     default:
