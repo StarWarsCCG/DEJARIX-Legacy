@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     MainWidget.cpp \
     CardActor.cpp \
     Camera.cpp \
-    ChatWidget.cpp
+    ChatWidget.cpp \
+    GameState.cpp
 
 HEADERS  += MainWindow.hpp \
     MainWidget.hpp \
@@ -33,4 +34,5 @@ HEADERS  += MainWindow.hpp \
     DeferredArray.hpp \
     MatrixAnimation.hpp \
     ChatWidget.hpp \
-    Curves.hpp
+    Curves.hpp \
+    GameState.hpp
