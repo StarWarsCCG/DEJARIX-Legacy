@@ -11,7 +11,11 @@ void GameState::applyAll(const CardInstance* instances, int instanceCount)
     auto stepIndex = (int)_millisecondsByStep.size();
 
     for (int i = 0; i < instanceCount; ++i)
-        _deltas.push_back({stepIndex, instances[i]});
+    {
+        auto instance = instances[i];
+        _cardStateByInstanceId[instance.id] = instance.state;
+        _deltas.push_back({stepIndex, instance});
+    }
 
     _millisecondsByStep.push_back(elapsed);
 }

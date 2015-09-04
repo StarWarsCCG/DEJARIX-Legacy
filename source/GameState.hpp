@@ -38,8 +38,8 @@ struct CardState
 
 struct CardInstance
 {
-    quint8 instanceId;
-    CardState instanceData;
+    quint8 id;
+    CardState state;
 };
 
 struct CardDelta
