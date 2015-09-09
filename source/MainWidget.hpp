@@ -20,6 +20,13 @@
 #include <memory>
 #include <random>
 
+struct CardRender
+{
+    QMatrix4x4 matrix;
+    QVector4D highlight;
+    GLuint texture;
+};
+
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -68,6 +75,8 @@ private:
     DeferredArray<QOpenGLTexture, 6> _textures;
     std::vector<GLuint> _bufferObjects;
     std::unordered_map<int, CardActor> _cardActors;
+    std::vector<CardRender> _faceUpCards;
+    std::vector<CardRender> _faceDownCards;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;

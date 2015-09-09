@@ -21,10 +21,6 @@ struct CardActor
     QVector3D position;
     RotationF rotation;
     RotationF flip;
-
-    QMatrix4x4 modelViewMatrix;
-
-    void update(QMatrix4x4* viewMatrices);
 };
 
 #endif

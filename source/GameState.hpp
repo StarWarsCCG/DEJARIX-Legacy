@@ -2,8 +2,9 @@
 #define GAMESTATE_H
 
 #include <QtGlobal>
-#include <QTime>
+#include <QDateTime>
 #include <vector>
+#include <random>
 
 constexpr quint8 LightSideFlag = 0x80;
 constexpr quint8 LightSide(quint8 n) { return n | LightSideFlag; }
@@ -19,8 +20,8 @@ constexpr quint8 OutOfPlay = 0x06;
 constexpr quint8 Hand = 0x07;
 constexpr quint8 Table = 0x08;
 constexpr quint8 Reveal = 0x09;
-constexpr quint8 LocationRow = 0x10;
 
+constexpr quint8 NullMode = 0x00;
 constexpr quint8 CollectionMode = 0x01;
 constexpr quint8 LocationMode = 0x02;
 constexpr quint8 DarkOccupationMode = 0x3;
@@ -48,28 +49,38 @@ struct CardDelta
     CardInstance instance;
 };
 
-class GameState
+struct VisibleGameState
 {
-    int _darkSideCount = 0;
-    int _lightSideCount = 0;
-    qint64 _cardInfoIdByCardInstanceId[256];
-    CardState _cardStateByInstanceId[256];
+    qint64 cardInfoIdByVisibleId[256];
+    CardState cardStateByVisibleId[256];
+};
 
-    std::vector<int> _millisecondsByStep;
-    std::vector<CardDelta> _deltas;
-    QTime _stopwatch;
+struct Deck
+{
+    const qint64* cardIds;
+    int cardCount;
+    int startCount;
+};
 
-public:
-    GameState() = default;
-    GameState(GameState&&) = default;
-    GameState(const GameState&) = default;
-    ~GameState() = default;
+struct GameState
+{
+    int darkSideCount;
+    int lightSideCount;
+    qint64 cardInfoIdByCardInstanceId[256];
+    CardState cardStateByInstanceId[256];
+    quint8 cardInstanceIdByDarkVisibleId[256];
+    quint8 cardInstanceIdByLightVisibleId[256];
 
-    GameState& operator=(GameState&&) = default;
-    GameState& operator=(const GameState&) = default;
+    std::vector<int> millisecondsByStep;
+    std::vector<CardDelta> deltas;
+    std::mt19937_64 generator;
+    QTime stopwatch;
+
+    void start(Deck darkDeck, Deck lightDeck);
 
     void apply(CardInstance instance);
     void applyAll(const CardInstance* instances, int instanceCount);
+    int countCollection(quint8 collectionId);
 };
 
 #endif

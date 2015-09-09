@@ -169,12 +169,10 @@ void MainWidget::paintGL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _cardModel.indexBufferObject);
     _program.setUniformValue(_uniforms.colorMatrix, _colorMatrix);
 
-    for (auto i : _cardActors)
+    for (const auto& render : _faceUpCards)
     {
-        auto actor = i.second;
-        _program.setUniformValue(
-            _uniforms.matrix, _projectionMatrix * actor.modelViewMatrix);
-        _program.setUniformValue(_uniforms.highlight, actor.highlight);
+        _program.setUniformValue(_uniforms.matrix, render.matrix);
+        _program.setUniformValue(_uniforms.highlight, render.highlight);
         _program.setUniformValue(_uniforms.enableTexture, false);
 
         glDrawElements(
@@ -185,24 +183,34 @@ void MainWidget::paintGL()
 
         _program.setUniformValue(_uniforms.enableTexture, true);
 
-        if (actor.isTopVisible)
-        {
-            glBindTexture(GL_TEXTURE_2D, actor.topTexture);
-            glDrawElements(
-                GL_TRIANGLES,
-                _cardModel.topCount,
-                GL_UNSIGNED_SHORT,
-                nullptr);
-        }
-        else
-        {
-            glBindTexture(GL_TEXTURE_2D, actor.bottomTexture);
-            glDrawElements(
-                GL_TRIANGLES,
-                _cardModel.bottomCount,
-                GL_UNSIGNED_SHORT,
-                _cardModel.bottomOffset);
-        }
+        glBindTexture(GL_TEXTURE_2D, render.texture);
+        glDrawElements(
+            GL_TRIANGLES,
+            _cardModel.topCount,
+            GL_UNSIGNED_SHORT,
+            nullptr);
+    }
+
+    for (const auto& render : _faceDownCards)
+    {
+        _program.setUniformValue(_uniforms.matrix, render.matrix);
+        _program.setUniformValue(_uniforms.highlight, render.highlight);
+        _program.setUniformValue(_uniforms.enableTexture, false);
+
+        glDrawElements(
+            GL_TRIANGLES,
+            _cardModel.middleCount,
+            GL_UNSIGNED_SHORT,
+            _cardModel.middleOffset);
+
+        _program.setUniformValue(_uniforms.enableTexture, true);
+
+        glBindTexture(GL_TEXTURE_2D, render.texture);
+        glDrawElements(
+            GL_TRIANGLES,
+            _cardModel.bottomCount,
+            GL_UNSIGNED_SHORT,
+            _cardModel.bottomOffset);
     }
 
     _program.setUniformValue(_uniforms.enableTexture, true);
@@ -584,7 +592,49 @@ void MainWidget::onTimer()
         _viewMatrices[CameraMatrixIndex].setToIdentity();
         _camera.apply(_viewMatrices[CameraMatrixIndex]);
 
-        for (auto& i : _cardActors) i.second.update(_viewMatrices);
+        _faceUpCards.clear();
+        _faceDownCards.clear();
+
+        for (const auto& pair : _cardActors)
+        {
+            const CardActor& actor = pair.second;
+            QMatrix4x4 modelMatrix;
+            modelMatrix.translate(actor.position);
+            modelMatrix.rotate(actor.flip.toDegrees(), 0.0f, 1.0f, 0.0f);
+            modelMatrix.rotate(actor.rotation.toDegrees(), 0.0f, 0.0f, 1.0f);
+            modelMatrix.scale(1.0f, 1.0f, actor.depthFactor);
+
+            QMatrix4x4 modelViewMatrix =
+                _viewMatrices[actor.viewMatrixIndex] * modelMatrix;
+
+            constexpr QVector4D Origin(0.0f, 0.0f, 0.0f, 1.0f);
+            constexpr QVector4D Arrow(0.0f, 0.0f, 1.0f, 1.0f);
+
+            QVector4D modelViewOrigin = modelViewMatrix * Origin;
+            QVector4D modelViewArrow = modelViewMatrix * Arrow;
+            QVector3D direction =
+                modelViewArrow.toVector3DAffine() -
+                modelViewOrigin.toVector3DAffine();
+            QVector3D cameraToPolygon =
+                QVector3D(modelViewOrigin).normalized();
+            float dotProduct =
+                QVector3D::dotProduct(cameraToPolygon, direction);
+
+            CardRender render;
+            render.matrix = _projectionMatrix * modelViewMatrix;
+            render.highlight = actor.highlight;
+
+            if (dotProduct < 0.0f)
+            {
+                render.texture = actor.topTexture;
+                _faceUpCards.push_back(render);
+            }
+            else
+            {
+                render.texture = actor.bottomTexture;
+                _faceDownCards.push_back(render);
+            }
+        }
 
         update();
         _stateChanged = false;

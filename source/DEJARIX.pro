@@ -18,7 +18,6 @@ CONFIG += c++11
 SOURCES += main.cpp\
         MainWindow.cpp \
     MainWidget.cpp \
-    CardActor.cpp \
     Camera.cpp \
     ChatWidget.cpp \
     GameState.cpp
