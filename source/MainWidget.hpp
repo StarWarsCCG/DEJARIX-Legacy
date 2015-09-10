@@ -8,6 +8,7 @@
 #include "CardSpecifications.hpp"
 #include "MatrixAnimation.hpp"
 #include "DeferredArray.hpp"
+#include "PileLocations.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -65,12 +66,13 @@ private:
     Camera _camera;
     QMatrix4x4 _viewMatrices[2];
     QMatrix4x4 _colorMatrix;
-    bool _isCameraRotating;
-    bool _isCameraPanning;
-    bool _isBlackAndWhite;
+    bool _isCameraRotating = false;
+    bool _isCameraPanning = false;
+    bool _isBlackAndWhite = false;
     bool _stateChanged = true;
     bool _stateChangeLog = true;
     QPoint _mouse;
+    float _darkSideReserve = 0.0f;
 
     DeferredArray<QOpenGLTexture, 6> _textures;
     std::vector<GLuint> _bufferObjects;
@@ -82,6 +84,9 @@ private:
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
+    PileLocations _darkLocations;
+    PileLocations _lightLocations;
+    int _popCount = 0;
 
     struct
     {

@@ -13,7 +13,6 @@ struct CardActor
 {
     GLuint topTexture = 0;
     GLuint bottomTexture = 0;
-    bool isTopVisible = true;
     float depthFactor = 1.0f;
     int viewMatrixIndex = CameraMatrixIndex;
 

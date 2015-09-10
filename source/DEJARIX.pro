@@ -34,4 +34,5 @@ HEADERS  += MainWindow.hpp \
     MatrixAnimation.hpp \
     ChatWidget.hpp \
     Curves.hpp \
-    GameState.hpp
+    GameState.hpp \
+    PileLocations.hpp

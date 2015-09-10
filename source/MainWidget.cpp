@@ -21,10 +21,8 @@ static float findDistance(RotationF fov, float height)
 
 MainWidget::MainWidget(QWidget* parent)
     : QOpenGLWidget(parent)
-    , _isCameraRotating(false)
-    , _isCameraPanning(false)
-    , _isBlackAndWhite(false)
 {
+    Q_UNUSED(findDistance);
     _fovy = RotationF::fromDegrees(60.0f);
     _camera.distance = 32.0f;
     _camera.angle = RotationF::fromDegrees(-10.0f);
@@ -34,6 +32,15 @@ MainWidget::MainWidget(QWidget* parent)
 
     _colorMatrixAnimation.stepCount = 15;
     _colorMatrixAnimation.currentStep = 30;
+
+    float w = _cardModel.specifications.width + 1.0f;
+    float h = _cardModel.specifications.height + 1.0f;
+
+    _darkLocations.reserveDeck = QVector2D(0.0f, 0.0f);
+    _darkLocations.forcePile = _darkLocations.reserveDeck + QVector2D(w, 0.0f);
+    _darkLocations.usedPile = _darkLocations.reserveDeck + QVector2D(0.0f, h);
+    _darkLocations.lostPile = _darkLocations.reserveDeck - QVector2D(w, 0.0f);
+    _darkLocations.outOutPlay = _darkLocations.lostPile - QVector2D(w, 0.0f);
 
     setMouseTracking(true);
 }
@@ -295,23 +302,9 @@ void MainWidget::resetCards()
         CardActor actor;
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(0.0f, 0.0f, z);
-
-        //actor.rotation = RotationF::fromDegrees(90.0f);
+        actor.position = QVector3D(_darkLocations.reserveDeck, z);
 
         _cardActors[i] = actor;
-    }
-
-    for (int i = 0; i < 60; ++i)
-    {
-        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
-
-        CardActor actor;
-        actor.topTexture = _textures[1].textureId();
-        actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(8.0f, 0.0f, z);
-
-        _cardActors[i + 60] = actor;
     }
 
     _stateChanged = true;
@@ -369,22 +362,24 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_W:
     {
-        std::uniform_int_distribution<int> distribution(15, 45);
-        for (int i = 0; i < 120; ++i)
-        {
-            auto actor = _cardActors[i];
-            CardPositionAnimation cpa;
-            cpa.cardId = i;
-            cpa.control.points[0] = actor.position;
-            cpa.control.points[1] =
-                actor.position + QVector3D(2.5f, 1.0f, 0.0f);
-            cpa.control.points[2] =
-                actor.position + QVector3D(5.0f, 0.0f, 0.0f);
-            cpa.stepCount = distribution(_mt);
-            cpa.currentStep = 0;
+        int cardId = 59 - _popCount;
+        CardActor cardActor = _cardActors[cardId];
+        float depth = _cardModel.specifications.depth;
 
-            _cardPositionAnimations.push_back(cpa);
-        }
+        CardPositionAnimation cpa;
+        cpa.cardId = cardId;
+        cpa.currentStep = 0;
+        cpa.stepCount = 60;
+        cpa.control.points[0] = cardActor.position;
+        cpa.control.points[2] = QVector3D(
+            _darkLocations.forcePile, depth / 2.0f + depth * float(_popCount));
+        cpa.control.points[1] =
+            (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
+            QVector3D(4.0f, 0.0f, float(_popCount) * 0.125f + 2.0f);
+
+        _cardPositionAnimations.push_back(cpa);
+        ++_popCount;
+
         break;
     }
 
@@ -480,7 +475,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.cardId = 59;
         cpa.control.points[0] = actor.position;
         cpa.control.points[1] = QVector3D(-6.0f, 4.0f, 8.0f);
-        cpa.control.points[2] = QVector3D(-12.0f, 0.0f, _cardModel.specifications.depth / 2.0f);
+        cpa.control.points[2] =
+            QVector3D(-12.0f, 0.0f, _cardModel.specifications.depth / 2.0f);
         cpa.stepCount = 15;
         cpa.currentStep = 0;
 
