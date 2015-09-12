@@ -84,9 +84,8 @@ private:
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
-    PileLocations _darkLocations;
-    PileLocations _lightLocations;
-    int _popCount = 0;
+    PileSet _darkLocations;
+    PileSet _lightLocations;
 
     struct
     {

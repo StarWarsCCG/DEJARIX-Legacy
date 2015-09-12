@@ -9,7 +9,7 @@ struct Pile
     int cardCount = 0;
 };
 
-struct PileLocations
+struct PileSet
 {
     Pile reserveDeck;
     Pile forcePile;

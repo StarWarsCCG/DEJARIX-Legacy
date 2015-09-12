@@ -366,9 +366,11 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_W:
     {
-        int cardId = 59 - _popCount;
+        int cardId = 59 - _darkLocations.forcePile.cardCount;
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
+
+        auto forcePileCount = float(_darkLocations.forcePile.cardCount);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -376,13 +378,15 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.forcePile.position, depth / 2.0f + depth * float(_popCount));
+            _darkLocations.forcePile.position, depth / 2.0f +
+            depth * forcePileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
-            QVector3D(4.0f, 0.0f, float(_popCount) * 0.125f + 2.0f);
+            QVector3D(4.0f, 0.0f, forcePileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_popCount;
+        ++_darkLocations.forcePile.cardCount;
+        --_darkLocations.reserveDeck.cardCount;
 
         break;
     }
