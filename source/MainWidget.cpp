@@ -36,11 +36,15 @@ MainWidget::MainWidget(QWidget* parent)
     float w = _cardModel.specifications.width + 1.0f;
     float h = _cardModel.specifications.height + 1.0f;
 
-    _darkLocations.reserveDeck = QVector2D(0.0f, 0.0f);
-    _darkLocations.forcePile = _darkLocations.reserveDeck + QVector2D(w, 0.0f);
-    _darkLocations.usedPile = _darkLocations.reserveDeck + QVector2D(0.0f, h);
-    _darkLocations.lostPile = _darkLocations.reserveDeck - QVector2D(w, 0.0f);
-    _darkLocations.outOutPlay = _darkLocations.lostPile - QVector2D(w, 0.0f);
+    _darkLocations.reserveDeck.position = QVector2D(0.0f, 0.0f);
+    _darkLocations.forcePile.position =
+        _darkLocations.reserveDeck.position + QVector2D(w, 0.0f);
+    _darkLocations.usedPile.position =
+        _darkLocations.reserveDeck.position + QVector2D(0.0f, h);
+    _darkLocations.lostPile.position =
+        _darkLocations.reserveDeck.position - QVector2D(w, 0.0f);
+    _darkLocations.outOutPlay.position =
+        _darkLocations.lostPile.position - QVector2D(w, 0.0f);
 
     setMouseTracking(true);
 }
@@ -302,7 +306,7 @@ void MainWidget::resetCards()
         CardActor actor;
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(_darkLocations.reserveDeck, z);
+        actor.position = QVector3D(_darkLocations.reserveDeck.position, z);
 
         _cardActors[i] = actor;
     }
@@ -372,7 +376,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.forcePile, depth / 2.0f + depth * float(_popCount));
+            _darkLocations.forcePile.position, depth / 2.0f + depth * float(_popCount));
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
             QVector3D(4.0f, 0.0f, float(_popCount) * 0.125f + 2.0f);

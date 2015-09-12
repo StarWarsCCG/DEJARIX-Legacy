@@ -3,13 +3,19 @@
 
 #include <QVector2D>
 
+struct Pile
+{
+    QVector2D position;
+    int cardCount = 0;
+};
+
 struct PileLocations
 {
-    QVector2D reserveDeck;
-    QVector2D forcePile;
-    QVector2D usedPile;
-    QVector2D lostPile;
-    QVector2D outOutPlay;
+    Pile reserveDeck;
+    Pile forcePile;
+    Pile usedPile;
+    Pile lostPile;
+    Pile outOutPlay;
 };
 
 #endif
