@@ -35,4 +35,4 @@ HEADERS  += MainWindow.hpp \
     ChatWidget.hpp \
     Curves.hpp \
     GameState.hpp \
-    PileLocations.hpp
+    Piles.hpp

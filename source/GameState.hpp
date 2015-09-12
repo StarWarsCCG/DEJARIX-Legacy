@@ -80,7 +80,8 @@ struct GameState
 
     void apply(CardInstance instance);
     void applyAll(const CardInstance* instances, int instanceCount);
-    int countCollection(quint8 collectionId);
+    int countCollection(quint8 collectionId) const;
+    quint8 topCard(quint8 collectionId) const;
 };
 
 #endif

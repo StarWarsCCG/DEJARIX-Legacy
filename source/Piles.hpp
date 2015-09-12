@@ -1,5 +1,5 @@
-#ifndef PILELOCATIONS_HPP
-#define PILELOCATIONS_HPP
+#ifndef PILES_HPP
+#define PILES_HPP
 
 #include <QVector2D>
 

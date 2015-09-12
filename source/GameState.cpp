@@ -81,7 +81,7 @@ void GameState::applyAll(const CardInstance* instances, int instanceCount)
     millisecondsByStep.push_back(stopwatch.elapsed());
 }
 
-int GameState::countCollection(quint8 collectionId)
+int GameState::countCollection(quint8 collectionId) const
 {
     int result = 0;
     int totalCount = darkSideCount + lightSideCount;
@@ -90,6 +90,27 @@ int GameState::countCollection(quint8 collectionId)
     {
         const CardState& cs = cardStateByInstanceId[i];
         if (cs.mode == CollectionMode && cs.location == collectionId) ++result;
+    }
+
+    return result;
+}
+
+quint8 GameState::topCard(quint8 collectionId) const
+{
+    quint8 result = 255;
+    int ordinal = -1;
+    int totalCount = darkSideCount + lightSideCount;
+
+    for (int i = 0; i < totalCount; ++i)
+    {
+        const CardState& cs = cardStateByInstanceId[i];
+        if (cs.mode == CollectionMode
+            && cs.location == collectionId
+            && cs.ordinal > ordinal)
+        {
+            result = i;
+            ordinal = cs.ordinal;
+        }
     }
 
     return result;

@@ -8,7 +8,8 @@
 #include "CardSpecifications.hpp"
 #include "MatrixAnimation.hpp"
 #include "DeferredArray.hpp"
-#include "PileLocations.hpp"
+#include "Piles.hpp"
+#include "GameState.hpp"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -86,6 +87,7 @@ private:
     std::mt19937_64 _mt;
     PileSet _darkLocations;
     PileSet _lightLocations;
+    GameState _state;
 
     struct
     {
