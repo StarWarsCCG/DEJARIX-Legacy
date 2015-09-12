@@ -370,7 +370,37 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_W:
     {
+        quint8 cardId = _state.topCard(DarkSide(ForcePile));
+        qDebug() << cardId;
+        if (cardId == 255) break;
+        CardState cardState;
+        cardState.mode = CollectionMode;
+        cardState.location = DarkSide(UsedPile);
+        cardState.ordinal = _darkLocations.usedPile.cardCount;
+        cardState.rotation = 0;
+        cardState.isFaceUp = false;
+        _state.cardStateByInstanceId[cardId] = cardState;
 
+        CardActor cardActor = _cardActors[cardId];
+        float depth = _cardModel.specifications.depth;
+
+        auto usedPileCount = float(_darkLocations.usedPile.cardCount);
+
+        CardPositionAnimation cpa;
+        cpa.cardId = cardId;
+        cpa.currentStep = 0;
+        cpa.stepCount = 60;
+        cpa.control.points[0] = cardActor.position;
+        cpa.control.points[2] = QVector3D(
+            _darkLocations.usedPile.position, depth / 2.0f +
+            depth * usedPileCount);
+        cpa.control.points[1] =
+            (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
+            QVector3D(4.0f, 0.0f, usedPileCount * 0.125f + 2.0f);
+
+        _cardPositionAnimations.push_back(cpa);
+        ++_darkLocations.usedPile.cardCount;
+        --_darkLocations.forcePile.cardCount;
 
         break;
     }
@@ -390,14 +420,62 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_S:
     {
-        for (int i = 0; i < 6; ++i)
+        if (_darkLocations.usedPile.cardCount < 1) break;
+
+        auto usedPileSize = float(_darkLocations.usedPile.cardCount) *
+            _cardModel.specifications.depth;
+
+        for (int i = 0; i < _state.darkSideCount; ++i)
         {
-            auto ii = i + 1;
-            const auto& actor = _cardActors[i];
-            auto rotation = actor.rotation.toRadians();
-            _cardRotationAnimations.push_back(
-                { i, rotation, rotation - pi<float>(), 0.25f, ii * 15, 0 });
+            CardState& cardState = _state.cardStateByInstanceId[i];
+
+            if (cardState.mode != CollectionMode) continue;
+
+            if (cardState.location == DarkSide(ReserveDeck))
+            {
+                CardActor cardActor = _cardActors[i];
+
+                CardPositionAnimation cpa;
+                cpa.cardId = i;
+                cpa.stepCount = 30;
+                cpa.currentStep = 0;
+
+                _cardPositionAnimations.push_back(cpa);
+                cpa.control.points[0] = cardActor.position;
+                cpa.control.points[2] =
+                    cardActor.position + QVector3D(0.0f, 0.0f, usedPileSize);
+                cpa.control.points[1] =
+                    cpa.control.points[2] + QVector3D(0.0f, 0.0f, usedPileSize);
+
+                _cardPositionAnimations.push_back(cpa);
+                cardState.ordinal += _darkLocations.usedPile.cardCount;
+            }
+            else if (cardState.location == DarkSide(UsedPile))
+            {
+                CardActor cardActor = _cardActors[i];
+
+                CardPositionAnimation cpa;
+                cpa.cardId = i;
+                cpa.stepCount = 30;
+                cpa.currentStep = 0;
+
+                cpa.control.points[0] = cardActor.position;
+                cpa.control.points[2] =
+                    QVector3D(
+                        _darkLocations.reserveDeck.position,
+                        cardActor.position.z());
+                cpa.control.points[1] =
+                    (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
+
+                _cardPositionAnimations.push_back(cpa);
+                cardState.location = DarkSide(ReserveDeck);
+            }
         }
+
+        _darkLocations.reserveDeck.cardCount +=
+            _darkLocations.usedPile.cardCount;
+        _darkLocations.usedPile.cardCount = 0;
+
         break;
     }
 
