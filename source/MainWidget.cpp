@@ -407,15 +407,47 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_A:
     {
-        for (int i = 0; i < 6; ++i)
-        {
-            auto ii = i + 1;
-            const auto& actor = _cardActors[i];
-            auto rotation = actor.rotation.toRadians();
-            _cardRotationAnimations.push_back(
-                { i, rotation, rotation + pi<float>(), 0.125f * ii, 60, 0 });
-        }
-        break;
+        quint8 cardId = _state.topCard(DarkSide(ReserveDeck));
+        qDebug() << cardId;
+        if (cardId == 255) break;
+        CardState cardState;
+        cardState.mode = CollectionMode;
+        cardState.location = DarkSide(LostPile);
+        cardState.ordinal = _darkLocations.lostPile.cardCount;
+        cardState.rotation = 0;
+        cardState.isFaceUp = true;
+        _state.cardStateByInstanceId[cardId] = cardState;
+
+        CardActor cardActor = _cardActors[cardId];
+        float depth = _cardModel.specifications.depth;
+
+        auto lostPileCount = float(_darkLocations.lostPile.cardCount);
+
+        CardPositionAnimation cpa;
+        cpa.cardId = cardId;
+        cpa.currentStep = 0;
+        cpa.stepCount = 60;
+        cpa.control.points[0] = cardActor.position;
+        cpa.control.points[2] = QVector3D(
+            _darkLocations.lostPile.position, depth / 2.0f +
+            depth * lostPileCount);
+        cpa.control.points[1] =
+            (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
+            QVector3D(-4.0f, 0.0f, lostPileCount * 0.125f + 6.0f);
+
+        _cardPositionAnimations.push_back(cpa);
+
+        CardRotationAnimation cra;
+        cra.cardId = cardId;
+        cra.currentStep = 0;
+        cra.stepCount = 60;
+        cra.firstRadians = cardActor.rotation.toRadians();
+        cra.lastRadians = cra.firstRadians - pi<float>();
+
+        _cardFlipAnimations.push_back(cra);
+
+        ++_darkLocations.lostPile.cardCount;
+        --_darkLocations.reserveDeck.cardCount;
     }
 
     case Qt::Key_S:
