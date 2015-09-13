@@ -42,11 +42,13 @@ MainWidget::MainWidget(QWidget* parent)
     _darkCounts.lostPile = 0;
     _darkCounts.outOfPlay = 0;
 
-    _darkLocations.reserveDeck = QVector2D(0.0f, 0.0f);
-    _darkLocations.forcePile = _darkLocations.reserveDeck + QVector2D(w, 0.0f);
-    _darkLocations.usedPile = _darkLocations.reserveDeck + QVector2D(0.0f, h);
-    _darkLocations.lostPile = _darkLocations.reserveDeck - QVector2D(w, 0.0f);
-    _darkLocations.outOfPlay = _darkLocations.lostPile - QVector2D(w, 0.0f);
+    _darkRelativeLocations.reserveDeck = QVector2D(0.0f, 0.0f);
+    _darkRelativeLocations.forcePile = QVector2D(w, 0.0f);
+    _darkRelativeLocations.usedPile = QVector2D(0.0f, h);
+    _darkRelativeLocations.lostPile = QVector2D(-w, 0.0f);
+    _darkRelativeLocations.outOfPlay = QVector2D(w * -2.0f, 0.0f);
+
+    setDarkLocations(QVector2D(0.0f, 0.0f));
 
     qint64 cardInfoIds[60];
     for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
@@ -359,12 +361,53 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_Q:
     {
-        for (int i = 0; i < 60; ++i)
+        setDarkLocations(QVector2D(2.0f, 2.0f));
+
+        for (int i = 0; i < _state.darkSideCount; ++i)
         {
-            auto actor = _cardActors[i];
-            auto rotation = actor.rotation.toRadians();
-            _cardRotationAnimations.push_back(
-                {i, rotation, rotation + pi<float>(), 0.25f, 75 - i, 0});
+            CardState cs = _state.cardStateByInstanceId[i];
+            if (cs.mode == CollectionMode &&
+                cs.location >= DarkSide(ReserveDeck) &&
+                cs.location <= DarkSide(OutOfPlay))
+            {
+                CardActor cardActor = _cardActors[i];
+
+                CardPositionAnimation cpa;
+                cpa.cardId = i;
+                cpa.stepCount = 30;
+                cpa.currentStep = 0;
+                cpa.control.points[0] = cardActor.position;
+
+                QVector2D pilePosition;
+                switch (cs.location)
+                {
+                case DarkSide(ReserveDeck):
+                    pilePosition = _darkLocations.reserveDeck;
+                    break;
+                case DarkSide(ForcePile):
+                    pilePosition = _darkLocations.forcePile;
+                    break;
+                case DarkSide(UsedPile):
+                    pilePosition = _darkLocations.usedPile;
+                    break;
+                case DarkSide(LostPile):
+                    pilePosition = _darkLocations.lostPile;
+                    break;
+                case DarkSide(OutOfPlay):
+                    pilePosition = _darkLocations.outOfPlay;
+                    break;
+                default:
+                    qDebug() << Q_FUNC_INFO << "How did we get here?";
+                    break;
+                }
+
+                cpa.control.points[2] =
+                    QVector3D(pilePosition, cardActor.position.z());
+                cpa.control.points[1] =
+                    (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
+
+                _cardPositionAnimations.push_back(cpa);
+            }
         }
 
         break;
@@ -450,6 +493,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
         ++_darkCounts.lostPile;
         --_darkCounts.reserveDeck;
+        break;
     }
 
     case Qt::Key_S:
@@ -1069,6 +1113,19 @@ void MainWidget::loadCardMesh()
     _cardModel.bottomCount = bottomIndices.size();
     _cardModel.middleOffset = (GLushort*)0 + topIndices.size();
     _cardModel.bottomOffset = _cardModel.middleOffset + middleIndices.size();
+}
+
+void MainWidget::setDarkLocations(QVector2D position)
+{
+    _darkLocations.reserveDeck = position;
+    _darkLocations.forcePile =
+        _darkLocations.reserveDeck + _darkRelativeLocations.forcePile;
+    _darkLocations.usedPile =
+        _darkLocations.reserveDeck + _darkRelativeLocations.usedPile;
+    _darkLocations.lostPile =
+        _darkLocations.reserveDeck + _darkRelativeLocations.lostPile;
+    _darkLocations.outOfPlay =
+        _darkLocations.reserveDeck + _darkRelativeLocations.outOfPlay;
 }
 
 void MainWidget::dump()

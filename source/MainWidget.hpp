@@ -60,6 +60,7 @@ private:
     GLuint loadMesh(const std::vector<GLfloat>& data);
     GLuint loadIndexBuffer(const std::vector<GLushort>& data);
     void loadCardMesh();
+    void setDarkLocations(QVector2D position);
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
@@ -85,6 +86,7 @@ private:
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
+    PileSet<QVector2D> _darkRelativeLocations;
     PileSet<QVector2D> _darkLocations;
     PileSet<int> _darkCounts;
     PileSet<QVector2D> _lightLocations;
