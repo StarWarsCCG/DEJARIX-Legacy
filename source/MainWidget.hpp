@@ -85,8 +85,10 @@ private:
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
-    PileSet _darkLocations;
-    PileSet _lightLocations;
+    PileSet<QVector2D> _darkLocations;
+    PileSet<int> _darkCounts;
+    PileSet<QVector2D> _lightLocations;
+    PileSet<int> _lightCounts;
     GameState _state;
 
     struct

@@ -36,15 +36,17 @@ MainWidget::MainWidget(QWidget* parent)
     float w = _cardModel.specifications.width + 1.0f;
     float h = _cardModel.specifications.height + 1.0f;
 
-    _darkLocations.reserveDeck.position = QVector2D(0.0f, 0.0f);
-    _darkLocations.forcePile.position =
-        _darkLocations.reserveDeck.position + QVector2D(w, 0.0f);
-    _darkLocations.usedPile.position =
-        _darkLocations.reserveDeck.position + QVector2D(0.0f, h);
-    _darkLocations.lostPile.position =
-        _darkLocations.reserveDeck.position - QVector2D(w, 0.0f);
-    _darkLocations.outOutPlay.position =
-        _darkLocations.lostPile.position - QVector2D(w, 0.0f);
+    _darkCounts.reserveDeck = 60;
+    _darkCounts.forcePile = 0;
+    _darkCounts.usedPile = 0;
+    _darkCounts.lostPile = 0;
+    _darkCounts.outOfPlay = 0;
+
+    _darkLocations.reserveDeck = QVector2D(0.0f, 0.0f);
+    _darkLocations.forcePile = _darkLocations.reserveDeck + QVector2D(w, 0.0f);
+    _darkLocations.usedPile = _darkLocations.reserveDeck + QVector2D(0.0f, h);
+    _darkLocations.lostPile = _darkLocations.reserveDeck - QVector2D(w, 0.0f);
+    _darkLocations.outOfPlay = _darkLocations.lostPile - QVector2D(w, 0.0f);
 
     qint64 cardInfoIds[60];
     for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
@@ -310,7 +312,7 @@ void MainWidget::resetCards()
         CardActor actor;
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(_darkLocations.reserveDeck.position, z);
+        actor.position = QVector3D(_darkLocations.reserveDeck, z);
 
         _cardActors[i] = actor;
     }
@@ -376,7 +378,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(UsedPile);
-        cardState.ordinal = _darkLocations.usedPile.cardCount;
+        cardState.ordinal = _darkCounts.usedPile;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -384,7 +386,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto usedPileCount = float(_darkLocations.usedPile.cardCount);
+        auto usedPileCount = float(_darkCounts.usedPile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -392,15 +394,15 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.usedPile.position, depth / 2.0f +
+            _darkLocations.usedPile, depth / 2.0f +
             depth * usedPileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
             QVector3D(4.0f, 0.0f, usedPileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_darkLocations.usedPile.cardCount;
-        --_darkLocations.forcePile.cardCount;
+        ++_darkCounts.usedPile;
+        --_darkCounts.forcePile;
 
         break;
     }
@@ -413,7 +415,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(LostPile);
-        cardState.ordinal = _darkLocations.lostPile.cardCount;
+        cardState.ordinal = _darkCounts.lostPile;
         cardState.rotation = 0;
         cardState.isFaceUp = true;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -421,7 +423,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto lostPileCount = float(_darkLocations.lostPile.cardCount);
+        auto lostPileCount = float(_darkCounts.lostPile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -429,32 +431,32 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.lostPile.position, depth / 2.0f +
-            depth * lostPileCount);
+            _darkLocations.lostPile,
+            depth / 2.0f + depth * lostPileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
-            QVector3D(-4.0f, 0.0f, lostPileCount * 0.125f + 6.0f);
+            QVector3D(-4.0f, 0.0f, lostPileCount * 0.125f + 12.0f);
 
         _cardPositionAnimations.push_back(cpa);
 
         CardRotationAnimation cra;
         cra.cardId = cardId;
         cra.currentStep = 0;
-        cra.stepCount = 60;
+        cra.stepCount = 30;
         cra.firstRadians = cardActor.rotation.toRadians();
         cra.lastRadians = cra.firstRadians - pi<float>();
 
         _cardFlipAnimations.push_back(cra);
 
-        ++_darkLocations.lostPile.cardCount;
-        --_darkLocations.reserveDeck.cardCount;
+        ++_darkCounts.lostPile;
+        --_darkCounts.reserveDeck;
     }
 
     case Qt::Key_S:
     {
-        if (_darkLocations.usedPile.cardCount < 1) break;
+        if (_darkCounts.usedPile < 1) break;
 
-        auto usedPileSize = float(_darkLocations.usedPile.cardCount) *
+        auto usedPileSize = float(_darkCounts.usedPile) *
             _cardModel.specifications.depth;
 
         for (int i = 0; i < _state.darkSideCount; ++i)
@@ -480,7 +482,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                     cpa.control.points[2] + QVector3D(0.0f, 0.0f, usedPileSize);
 
                 _cardPositionAnimations.push_back(cpa);
-                cardState.ordinal += _darkLocations.usedPile.cardCount;
+                cardState.ordinal += _darkCounts.usedPile;
             }
             else if (cardState.location == DarkSide(UsedPile))
             {
@@ -494,7 +496,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 cpa.control.points[0] = cardActor.position;
                 cpa.control.points[2] =
                     QVector3D(
-                        _darkLocations.reserveDeck.position,
+                        _darkLocations.reserveDeck,
                         cardActor.position.z());
                 cpa.control.points[1] =
                     (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
@@ -504,9 +506,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             }
         }
 
-        _darkLocations.reserveDeck.cardCount +=
-            _darkLocations.usedPile.cardCount;
-        _darkLocations.usedPile.cardCount = 0;
+        _darkCounts.reserveDeck += _darkCounts.usedPile;
+        _darkCounts.usedPile = 0;
 
         break;
     }
@@ -519,7 +520,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(ForcePile);
-        cardState.ordinal = _darkLocations.forcePile.cardCount;
+        cardState.ordinal = _darkCounts.forcePile;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -527,7 +528,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto forcePileCount = float(_darkLocations.forcePile.cardCount);
+        auto forcePileCount = float(_darkCounts.forcePile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -535,15 +536,15 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.forcePile.position, depth / 2.0f +
-            depth * forcePileCount);
+            _darkLocations.forcePile,
+            depth / 2.0f + depth * forcePileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
             QVector3D(4.0f, 0.0f, forcePileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_darkLocations.forcePile.cardCount;
-        --_darkLocations.reserveDeck.cardCount;
+        ++_darkCounts.forcePile;
+        --_darkCounts.reserveDeck;
 
         break;
     }
