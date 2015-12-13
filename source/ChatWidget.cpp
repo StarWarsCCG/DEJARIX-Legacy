@@ -10,6 +10,7 @@ void ChatWidget::append(QString text, QColor color)
 ChatWidget::ChatWidget(QWidget* parent)
     : QWidget(parent)
     , _sendButton("Send")
+    , _distribution(0, 255)
 {
     _textBox.setTextColor(QColor(255, 0, 0));
     QPalette p = _textBox.palette();
@@ -38,9 +39,14 @@ void ChatWidget::sendChat()
 
     if (text.length() > 0)
     {
+        _textBox.setTextColor(
+            QColor(
+                _distribution(_mt),
+                _distribution(_mt),
+                _distribution(_mt)));
+
         _textBox.append(text.toHtmlEscaped());
         _lineEdit.clear();
-        _textBox.setTextColor(QColor(0, 255, 0));
     }
     else
     {

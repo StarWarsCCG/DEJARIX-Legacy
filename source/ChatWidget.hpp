@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QFocusEvent>
+#include <random>
 
 class ChatWidget : public QWidget
 {
@@ -18,6 +19,8 @@ class ChatWidget : public QWidget
     QTextBrowser _textBox;
     QLineEdit _lineEdit;
     QPushButton _sendButton;
+    std::mt19937_64 _mt;
+    std::uniform_int_distribution<int> _distribution;
 
     void append(QString text, QColor color);
 
