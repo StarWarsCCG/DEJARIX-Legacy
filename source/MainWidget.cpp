@@ -36,12 +36,6 @@ MainWidget::MainWidget(QWidget* parent)
     float w = _cardModel.specifications.width + 1.0f;
     float h = _cardModel.specifications.height + 1.0f;
 
-    _darkCounts.reserveDeck = 60;
-    _darkCounts.forcePile = 0;
-    _darkCounts.usedPile = 0;
-    _darkCounts.lostPile = 0;
-    _darkCounts.outOfPlay = 0;
-
     _darkRelativeLocations.reserveDeck = QVector2D(0.0f, 0.0f);
     _darkRelativeLocations.forcePile = QVector2D(w, 0.0f);
     _darkRelativeLocations.usedPile = QVector2D(0.0f, h);
@@ -49,10 +43,6 @@ MainWidget::MainWidget(QWidget* parent)
     _darkRelativeLocations.outOfPlay = QVector2D(w * -2.0f, 0.0f);
 
     setDarkLocations(QVector2D(0.0f, 0.0f));
-
-    qint64 cardInfoIds[60];
-    for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
-    _state.start({cardInfoIds, 60, 0}, {cardInfoIds, 60, 0});
 
     setMouseTracking(true);
 }
@@ -307,6 +297,16 @@ void MainWidget::wheelEvent(QWheelEvent* event)
 
 void MainWidget::resetCards()
 {
+    qint64 cardInfoIds[60];
+    for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
+    _state.start({cardInfoIds, 60, 0}, {cardInfoIds, 60, 0});
+
+    _darkCounts.reserveDeck = 60;
+    _darkCounts.forcePile = 0;
+    _darkCounts.usedPile = 0;
+    _darkCounts.lostPile = 0;
+    _darkCounts.outOfPlay = 0;
+
     for (int i = 0; i < 60; ++i)
     {
         auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
@@ -318,6 +318,10 @@ void MainWidget::resetCards()
 
         _cardActors[i] = actor;
     }
+
+    _cardFlipAnimations.clear();
+    _cardRotationAnimations.clear();
+    _cardPositionAnimations.clear();
 
     _stateChanged = true;
 }
