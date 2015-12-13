@@ -91,10 +91,8 @@ private:
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
     PileSet<QVector2D> _relativePileLocations;
-    PileSet<QVector2D> _darkLocations;
+    PileSet<QVector2D> _pileLocations[2];
     PileSet<int> _darkCounts;
-    PileSet<QVector2D> _lightRelativeLocations;
-    PileSet<QVector2D> _lightLocations;
     PileSet<int> _lightCounts;
     GameState _state;
 

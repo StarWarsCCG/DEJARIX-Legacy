@@ -325,7 +325,7 @@ void MainWidget::resetCards()
         CardActor actor;
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(_darkLocations.reserveDeck, z);
+        actor.position = QVector3D(_pileLocations[0].reserveDeck, z);
 
         _cardActors[i] = actor;
     }
@@ -337,7 +337,7 @@ void MainWidget::resetCards()
         CardActor actor;
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
-        actor.position = QVector3D(_lightLocations.reserveDeck, z);
+        actor.position = QVector3D(_pileLocations[1].reserveDeck, z);
         actor.rotation = RotationF::half();
 
         _cardActors[60 + i] = actor;
@@ -410,19 +410,19 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 switch (cs.location)
                 {
                 case DarkSide(ReserveDeck):
-                    pilePosition = _darkLocations.reserveDeck;
+                    pilePosition = _pileLocations[0].reserveDeck;
                     break;
                 case DarkSide(ForcePile):
-                    pilePosition = _darkLocations.forcePile;
+                    pilePosition = _pileLocations[0].forcePile;
                     break;
                 case DarkSide(UsedPile):
-                    pilePosition = _darkLocations.usedPile;
+                    pilePosition = _pileLocations[0].usedPile;
                     break;
                 case DarkSide(LostPile):
-                    pilePosition = _darkLocations.lostPile;
+                    pilePosition = _pileLocations[0].lostPile;
                     break;
                 case DarkSide(OutOfPlay):
-                    pilePosition = _darkLocations.outOfPlay;
+                    pilePosition = _pileLocations[0].outOfPlay;
                     break;
                 default:
                     qDebug() << Q_FUNC_INFO << "How did we get here?";
@@ -465,7 +465,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.usedPile, depth / 2.0f +
+            _pileLocations[0].usedPile, depth / 2.0f +
             depth * usedPileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
@@ -504,7 +504,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.lostPile,
+            _pileLocations[0].lostPile,
             depth / 2.0f + depth * lostPileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
@@ -572,7 +572,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 cpa.control.points[0] = cardActor.position;
                 cpa.control.points[2] =
                     QVector3D(
-                        _darkLocations.reserveDeck,
+                        _pileLocations[0].reserveDeck,
                         cardActor.position.z());
                 cpa.control.points[1] =
                     (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
@@ -614,7 +614,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _darkLocations.forcePile,
+            _pileLocations[0].forcePile,
             depth / 2.0f + depth * forcePileCount);
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
@@ -1153,28 +1153,28 @@ void MainWidget::loadCardMesh()
 
 void MainWidget::setDarkLocations(QVector2D position)
 {
-    _darkLocations.reserveDeck = position;
-    _darkLocations.forcePile =
-        _darkLocations.reserveDeck + _relativePileLocations.forcePile;
-    _darkLocations.usedPile =
-        _darkLocations.reserveDeck + _relativePileLocations.usedPile;
-    _darkLocations.lostPile =
-        _darkLocations.reserveDeck + _relativePileLocations.lostPile;
-    _darkLocations.outOfPlay =
-        _darkLocations.reserveDeck + _relativePileLocations.outOfPlay;
+    _pileLocations[0].reserveDeck = position;
+    _pileLocations[0].forcePile =
+        _pileLocations[0].reserveDeck + _relativePileLocations.forcePile;
+    _pileLocations[0].usedPile =
+        _pileLocations[0].reserveDeck + _relativePileLocations.usedPile;
+    _pileLocations[0].lostPile =
+        _pileLocations[0].reserveDeck + _relativePileLocations.lostPile;
+    _pileLocations[0].outOfPlay =
+        _pileLocations[0].reserveDeck + _relativePileLocations.outOfPlay;
 }
 
 void MainWidget::setLightLocations(QVector2D position)
 {
-    _lightLocations.reserveDeck = position;
-    _lightLocations.forcePile =
-        _lightLocations.reserveDeck - _relativePileLocations.forcePile;
-    _lightLocations.usedPile =
-        _lightLocations.reserveDeck - _relativePileLocations.usedPile;
-    _lightLocations.lostPile =
-        _lightLocations.reserveDeck - _relativePileLocations.lostPile;
-    _lightLocations.outOfPlay =
-        _lightLocations.reserveDeck - _relativePileLocations.outOfPlay;
+    _pileLocations[1].reserveDeck = position;
+    _pileLocations[1].forcePile =
+        _pileLocations[1].reserveDeck - _relativePileLocations.forcePile;
+    _pileLocations[1].usedPile =
+        _pileLocations[1].reserveDeck - _relativePileLocations.usedPile;
+    _pileLocations[1].lostPile =
+        _pileLocations[1].reserveDeck - _relativePileLocations.lostPile;
+    _pileLocations[1].outOfPlay =
+        _pileLocations[1].reserveDeck - _relativePileLocations.outOfPlay;
 }
 
 void MainWidget::dump()
