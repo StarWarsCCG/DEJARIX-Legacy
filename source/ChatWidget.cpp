@@ -12,7 +12,6 @@ ChatWidget::ChatWidget(QWidget* parent)
     , _sendButton("Send")
     , _distribution(0, 255)
 {
-    _textBox.setTextColor(QColor(255, 0, 0));
     QPalette p = _textBox.palette();
     p.setColor(QPalette::Base, QColor(0, 0, 0));
     _textBox.setPalette(p);
@@ -52,5 +51,12 @@ void ChatWidget::sendChat()
     {
         emit emptyChatSent();
     }
+}
+
+void ChatWidget::onCardEvent(QString description)
+{
+    _textBox.setTextColor(QColor(0, 255, 0));
+    QString result = "[" + description + "]";
+    _textBox.append(result.toHtmlEscaped());
 }
 

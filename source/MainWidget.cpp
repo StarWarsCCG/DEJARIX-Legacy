@@ -447,6 +447,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         ++_darkCounts.usedPile;
         --_darkCounts.forcePile;
 
+        emit cardEvent("activated force");
+
         break;
     }
 

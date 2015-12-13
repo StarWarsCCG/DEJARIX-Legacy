@@ -43,6 +43,9 @@ public:
 protected slots:
     void onTimer();
 
+signals:
+    void cardEvent(QString description);
+
 protected:
     virtual void initializeGL() override;
     virtual void resizeGL(int w, int h) override;

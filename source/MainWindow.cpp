@@ -17,6 +17,11 @@ MainWindow::MainWindow(QWidget* parent)
 
     connect(&_playerChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
     connect(&_publicChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
+    connect(
+        &_mainWidget,
+        SIGNAL(cardEvent(QString)),
+        &_playerChat,
+        SLOT(onCardEvent(QString)));
 
     _chatTabs.addTab(&_playerChat, "Players");
     _chatTabs.addTab(&_publicChat, "Spectators");

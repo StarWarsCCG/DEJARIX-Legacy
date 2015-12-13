@@ -36,6 +36,7 @@ signals:
 
 private slots:
     void sendChat();
+    void onCardEvent(QString description);
 };
 
 #endif
