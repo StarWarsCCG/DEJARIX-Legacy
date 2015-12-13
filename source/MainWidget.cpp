@@ -447,7 +447,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         ++_darkCounts.usedPile;
         --_darkCounts.forcePile;
 
-        emit cardEvent("activated force");
+        emit cardEvent("used force");
 
         break;
     }
@@ -495,6 +495,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
         ++_darkCounts.lostPile;
         --_darkCounts.reserveDeck;
+
+        emit cardEvent("lost card from Reserve Deck");
         break;
     }
 
@@ -555,6 +557,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         _darkCounts.reserveDeck += _darkCounts.usedPile;
         _darkCounts.usedPile = 0;
 
+        emit cardEvent("cycled Used Pile under Reserve Deck");
+
         break;
     }
 
@@ -591,6 +595,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         _cardPositionAnimations.push_back(cpa);
         ++_darkCounts.forcePile;
         --_darkCounts.reserveDeck;
+
+        emit cardEvent("activated force");
 
         break;
     }
