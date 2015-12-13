@@ -36,13 +36,14 @@ MainWidget::MainWidget(QWidget* parent)
     float w = _cardModel.specifications.width + 1.0f;
     float h = _cardModel.specifications.height + 1.0f;
 
-    _darkRelativeLocations.reserveDeck = QVector2D(0.0f, 0.0f);
-    _darkRelativeLocations.forcePile = QVector2D(w, 0.0f);
-    _darkRelativeLocations.usedPile = QVector2D(0.0f, h);
-    _darkRelativeLocations.lostPile = QVector2D(-w, 0.0f);
-    _darkRelativeLocations.outOfPlay = QVector2D(w * -2.0f, 0.0f);
+    _relativePileLocations.reserveDeck = QVector2D(0.0f, 0.0f);
+    _relativePileLocations.forcePile = QVector2D(w, 0.0f);
+    _relativePileLocations.usedPile = QVector2D(0.0f, h);
+    _relativePileLocations.lostPile = QVector2D(-w, 0.0f);
+    _relativePileLocations.outOfPlay = QVector2D(w * -2.0f, 0.0f);
 
-    setDarkLocations(QVector2D(0.0f, 0.0f));
+    setDarkLocations({0.0f, -16.0f});
+    setLightLocations({0.0f, 16.0f});
 
     setMouseTracking(true);
 }
@@ -151,6 +152,8 @@ void MainWidget::resizeGL(int w, int h)
     _projectionMatrix.perspective(_fovy.toDegrees(), ratio, 1.0f, 1024.0f);
     glViewport(0, 0, w, h);
     glGetIntegerv(GL_VIEWPORT, _viewport);
+
+    onTimer();
 }
 
 void MainWidget::paintGL()
@@ -307,6 +310,14 @@ void MainWidget::resetCards()
     _darkCounts.lostPile = 0;
     _darkCounts.outOfPlay = 0;
 
+    _lightCounts.reserveDeck = 60;
+    _lightCounts.forcePile = 0;
+    _lightCounts.usedPile = 0;
+    _lightCounts.lostPile = 0;
+    _lightCounts.outOfPlay = 0;
+
+    _cardActors.clear();
+
     for (int i = 0; i < 60; ++i)
     {
         auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
@@ -317,6 +328,19 @@ void MainWidget::resetCards()
         actor.position = QVector3D(_darkLocations.reserveDeck, z);
 
         _cardActors[i] = actor;
+    }
+
+    for (int i = 0; i < 60; ++i)
+    {
+        auto z = _cardModel.specifications.depth / 2.0f * float(i * 2 + 1);
+
+        CardActor actor;
+        actor.topTexture = _textures[1].textureId();
+        actor.bottomTexture = _textures[2].textureId();
+        actor.position = QVector3D(_lightLocations.reserveDeck, z);
+        actor.rotation = RotationF::half();
+
+        _cardActors[60 + i] = actor;
     }
 
     _cardFlipAnimations.clear();
@@ -734,10 +758,10 @@ void MainWidget::onTimer()
 
     if (_stateChangeLog != _stateChanged)
     {
-        if (_stateChanged)
-            qDebug() << "state changed";
-        else
-            qDebug() << "state unchanged";
+//        if (_stateChanged)
+//            qDebug() << "state changed";
+//        else
+//            qDebug() << "state unchanged";
 
         _stateChangeLog = _stateChanged;
     }
@@ -1131,13 +1155,26 @@ void MainWidget::setDarkLocations(QVector2D position)
 {
     _darkLocations.reserveDeck = position;
     _darkLocations.forcePile =
-        _darkLocations.reserveDeck + _darkRelativeLocations.forcePile;
+        _darkLocations.reserveDeck + _relativePileLocations.forcePile;
     _darkLocations.usedPile =
-        _darkLocations.reserveDeck + _darkRelativeLocations.usedPile;
+        _darkLocations.reserveDeck + _relativePileLocations.usedPile;
     _darkLocations.lostPile =
-        _darkLocations.reserveDeck + _darkRelativeLocations.lostPile;
+        _darkLocations.reserveDeck + _relativePileLocations.lostPile;
     _darkLocations.outOfPlay =
-        _darkLocations.reserveDeck + _darkRelativeLocations.outOfPlay;
+        _darkLocations.reserveDeck + _relativePileLocations.outOfPlay;
+}
+
+void MainWidget::setLightLocations(QVector2D position)
+{
+    _lightLocations.reserveDeck = position;
+    _lightLocations.forcePile =
+        _lightLocations.reserveDeck - _relativePileLocations.forcePile;
+    _lightLocations.usedPile =
+        _lightLocations.reserveDeck - _relativePileLocations.usedPile;
+    _lightLocations.lostPile =
+        _lightLocations.reserveDeck - _relativePileLocations.lostPile;
+    _lightLocations.outOfPlay =
+        _lightLocations.reserveDeck - _relativePileLocations.outOfPlay;
 }
 
 void MainWidget::dump()
