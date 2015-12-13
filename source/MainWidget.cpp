@@ -304,17 +304,17 @@ void MainWidget::resetCards()
     for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
     _state.start({cardInfoIds, 60, 0}, {cardInfoIds, 60, 0});
 
-    _darkCounts.reserveDeck = 60;
-    _darkCounts.forcePile = 0;
-    _darkCounts.usedPile = 0;
-    _darkCounts.lostPile = 0;
-    _darkCounts.outOfPlay = 0;
+    _pileCounts[0].reserveDeck = 60;
+    _pileCounts[0].forcePile = 0;
+    _pileCounts[0].usedPile = 0;
+    _pileCounts[0].lostPile = 0;
+    _pileCounts[0].outOfPlay = 0;
 
-    _lightCounts.reserveDeck = 60;
-    _lightCounts.forcePile = 0;
-    _lightCounts.usedPile = 0;
-    _lightCounts.lostPile = 0;
-    _lightCounts.outOfPlay = 0;
+    _pileCounts[1].reserveDeck = 60;
+    _pileCounts[1].forcePile = 0;
+    _pileCounts[1].usedPile = 0;
+    _pileCounts[1].lostPile = 0;
+    _pileCounts[1].outOfPlay = 0;
 
     _cardActors.clear();
 
@@ -449,7 +449,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(UsedPile);
-        cardState.ordinal = _darkCounts.usedPile;
+        cardState.ordinal = _pileCounts[0].usedPile;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -457,7 +457,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto usedPileCount = float(_darkCounts.usedPile);
+        auto usedPileCount = float(_pileCounts[0].usedPile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -472,8 +472,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             QVector3D(4.0f, 0.0f, usedPileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_darkCounts.usedPile;
-        --_darkCounts.forcePile;
+        ++_pileCounts[0].usedPile;
+        --_pileCounts[0].forcePile;
 
         emit cardEvent("used force");
 
@@ -488,7 +488,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(LostPile);
-        cardState.ordinal = _darkCounts.lostPile;
+        cardState.ordinal = _pileCounts[0].lostPile;
         cardState.rotation = 0;
         cardState.isFaceUp = true;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -496,7 +496,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto lostPileCount = float(_darkCounts.lostPile);
+        auto lostPileCount = float(_pileCounts[0].lostPile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -521,8 +521,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
         _cardFlipAnimations.push_back(cra);
 
-        ++_darkCounts.lostPile;
-        --_darkCounts.reserveDeck;
+        ++_pileCounts[0].lostPile;
+        --_pileCounts[0].reserveDeck;
 
         emit cardEvent("lost card from Reserve Deck");
         break;
@@ -530,9 +530,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_S:
     {
-        if (_darkCounts.usedPile < 1) break;
+        if (_pileCounts[0].usedPile < 1) break;
 
-        auto usedPileSize = float(_darkCounts.usedPile) *
+        auto usedPileSize = float(_pileCounts[0].usedPile) *
             _cardModel.specifications.depth;
 
         for (int i = 0; i < _state.darkSideCount; ++i)
@@ -558,7 +558,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                     cpa.control.points[2] + QVector3D(0.0f, 0.0f, usedPileSize);
 
                 _cardPositionAnimations.push_back(cpa);
-                cardState.ordinal += _darkCounts.usedPile;
+                cardState.ordinal += _pileCounts[0].usedPile;
             }
             else if (cardState.location == DarkSide(UsedPile))
             {
@@ -582,8 +582,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             }
         }
 
-        _darkCounts.reserveDeck += _darkCounts.usedPile;
-        _darkCounts.usedPile = 0;
+        _pileCounts[0].reserveDeck += _pileCounts[0].usedPile;
+        _pileCounts[0].usedPile = 0;
 
         emit cardEvent("cycled Used Pile under Reserve Deck");
 
@@ -592,13 +592,21 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_D:
     {
+        int n = 0;
         quint8 cardId = _state.topCard(DarkSide(ReserveDeck));
+
+        if (event->modifiers() & Qt::ShiftModifier)
+        {
+            n = 1;
+            cardId = _state.topCard(LightSide(ReserveDeck));
+        }
+
         qDebug() << cardId;
         if (cardId == 255) break;
         CardState cardState;
         cardState.mode = CollectionMode;
         cardState.location = DarkSide(ForcePile);
-        cardState.ordinal = _darkCounts.forcePile;
+        cardState.ordinal = _pileCounts[0].forcePile;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -606,7 +614,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto forcePileCount = float(_darkCounts.forcePile);
+        auto forcePileCount = float(_pileCounts[0].forcePile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -621,8 +629,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             QVector3D(4.0f, 0.0f, forcePileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_darkCounts.forcePile;
-        --_darkCounts.reserveDeck;
+        ++_pileCounts[0].forcePile;
+        --_pileCounts[0].reserveDeck;
 
         emit cardEvent("activated force");
 

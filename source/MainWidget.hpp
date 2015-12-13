@@ -92,8 +92,7 @@ private:
     std::mt19937_64 _mt;
     PileSet<QVector2D> _relativePileLocations;
     PileSet<QVector2D> _pileLocations[2];
-    PileSet<int> _darkCounts;
-    PileSet<int> _lightCounts;
+    PileSet<int> _pileCounts[2];
     GameState _state;
 
     struct
