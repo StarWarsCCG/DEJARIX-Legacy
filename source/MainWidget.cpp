@@ -605,8 +605,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         if (cardId == 255) break;
         CardState cardState;
         cardState.mode = CollectionMode;
-        cardState.location = DarkSide(ForcePile);
-        cardState.ordinal = _pileCounts[0].forcePile;
+        cardState.location = AutoSide(ForcePile, n);
+        cardState.ordinal = _pileCounts[n].forcePile;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -614,7 +614,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         CardActor cardActor = _cardActors[cardId];
         float depth = _cardModel.specifications.depth;
 
-        auto forcePileCount = float(_pileCounts[0].forcePile);
+        auto forcePileCount = float(_pileCounts[n].forcePile);
 
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
@@ -622,15 +622,17 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
         cpa.control.points[2] = QVector3D(
-            _pileLocations[0].forcePile,
+            _pileLocations[n].forcePile,
             depth / 2.0f + depth * forcePileCount);
+
+        float swing = n ? -4.0f : 4.0f;
         cpa.control.points[1] =
             (cpa.control.points[2] + cpa.control.points[0]) / 2.0f +
-            QVector3D(4.0f, 0.0f, forcePileCount * 0.125f + 2.0f);
+            QVector3D(swing, 0.0f, forcePileCount * 0.125f + 2.0f);
 
         _cardPositionAnimations.push_back(cpa);
-        ++_pileCounts[0].forcePile;
-        --_pileCounts[0].reserveDeck;
+        ++_pileCounts[n].forcePile;
+        --_pileCounts[n].reserveDeck;
 
         emit cardEvent("activated force");
 

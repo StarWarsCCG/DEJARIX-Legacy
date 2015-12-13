@@ -9,6 +9,10 @@
 constexpr quint8 LightSideFlag = 0x80;
 constexpr quint8 LightSide(quint8 n) { return n | LightSideFlag; }
 constexpr quint8 DarkSide(quint8 n) { return n & ~LightSideFlag; }
+constexpr quint8 AutoSide(quint8 n, bool isLight)
+{
+    return isLight ? LightSide(n) : DarkSide(n);
+}
 
 // Absolute Collections
 constexpr quint8 Starting = 0x01;
