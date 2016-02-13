@@ -57,6 +57,7 @@ protected:
     virtual void wheelEvent(QWheelEvent* event) override;
 
 private:
+    void prepareRender();
     void resetCards();
     QOpenGLTexture& loadImage(const QImage& image);
     QOpenGLTexture& loadText(const QString& text);
