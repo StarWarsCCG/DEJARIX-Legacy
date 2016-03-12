@@ -36,11 +36,11 @@ MainWidget::MainWidget(QWidget* parent)
     float w = _cardModel.specifications.width + 1.0f;
     float h = _cardModel.specifications.height + 1.0f;
 
-    _relativePileLocations.reserveDeck = QVector2D(0.0f, 0.0f);
-    _relativePileLocations.forcePile = QVector2D(w, 0.0f);
-    _relativePileLocations.usedPile = QVector2D(0.0f, h);
-    _relativePileLocations.lostPile = QVector2D(-w, 0.0f);
-    _relativePileLocations.outOfPlay = QVector2D(w * -2.0f, 0.0f);
+    _relativePileLocations.reserveDeck = {0.0f, 0.0f};
+    _relativePileLocations.forcePile = {w, 0.0f};
+    _relativePileLocations.usedPile = {0.0f, h};
+    _relativePileLocations.lostPile = {-w, 0.0f};
+    _relativePileLocations.outOfPlay = {w * -2.0f, 0.0f};
 
     setDarkLocations({0.0f, -16.0f});
     setLightLocations({0.0f, 16.0f});
