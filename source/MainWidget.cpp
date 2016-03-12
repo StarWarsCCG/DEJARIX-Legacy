@@ -80,7 +80,7 @@ void MainWidget::initializeGL()
 
     memcpy(_tableModel.mesh, TableMesh, sizeof(_tableModel.mesh));
 
-    constexpr auto VertexShaderSource =
+    auto VertexShaderSource =
         "attribute highp vec4 position;\n"
         "attribute lowp vec2 tc;\n"
         "varying lowp vec2 vtc;\n"
@@ -90,14 +90,7 @@ void MainWidget::initializeGL()
         "   gl_Position = matrix * position;\n"
         "}\n";
 
-    constexpr auto FragmentShaderSource =
-#ifdef Q_OS_WIN
-        // This produces a warning in Linux:
-        // warning C7022: unrecognized profile specifier "precision"
-
-        // This explodes in OSX. Apparently, only Windows demands it.
-        //"precision highp float;\n"
-#endif
+    auto FragmentShaderSource =
         "uniform bool enableTexture;\n"
         "uniform highp mat4 colorMatrix;\n"
         "uniform sampler2D texture;\n"
@@ -375,6 +368,7 @@ void MainWidget::resetCards()
         actor.topTexture = _textures[1].textureId();
         actor.bottomTexture = _textures[2].textureId();
         actor.position = QVector3D(_pileLocations[0].reserveDeck, z);
+        actor.flip = RotationF::half();
 
         _cardActors[i] = actor;
     }
@@ -565,7 +559,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cra.cardId = cardId;
         cra.currentStep = 0;
         cra.stepCount = 30;
-        cra.firstRadians = cardActor.rotation.toRadians();
+        cra.firstRadians = cardActor.flip.toRadians();
         cra.lastRadians = cra.firstRadians - pi<float>();
 
         _cardFlipAnimations.push_back(cra);
