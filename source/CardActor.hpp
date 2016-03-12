@@ -18,8 +18,9 @@ struct CardActor
 
     QVector4D highlight;
     QVector3D position;
-    RotationF rotation;
-    RotationF flip;
+    RotationF rotation; // z
+    RotationF tilt; // x
+    RotationF flip; // y
 };
 
 #endif

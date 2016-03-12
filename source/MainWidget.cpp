@@ -11,7 +11,6 @@ static constexpr float TableT = 128.0f;
 
 static constexpr GLsizei Stride = sizeof(GLfloat) * 5;
 
-
 static float findDistance(RotationF fov, float height)
 {
     auto theta = fov.toRadians() / 2.0f;
@@ -304,6 +303,7 @@ void MainWidget::prepareRender()
         QMatrix4x4 modelMatrix;
         modelMatrix.translate(actor.position);
         modelMatrix.rotate(actor.flip.toDegrees(), 0.0f, 1.0f, 0.0f);
+        modelMatrix.rotate(actor.tilt.toDegrees(), 1.0f, 0.0f, 0.0f);
         modelMatrix.rotate(actor.rotation.toDegrees(), 0.0f, 0.0f, 1.0f);
         modelMatrix.scale(1.0f, 1.0f, actor.depthFactor);
 
@@ -397,6 +397,50 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
+    case Qt::Key_Space:
+    {
+        break; // Not working XD
+        quint8 cardId = _state.topCard(DarkSide(ReserveDeck));
+        if (cardId == 255) break;
+
+        CardActor cardActor = _cardActors[cardId];
+
+        Camera camera = _camera;
+        camera.distance -= findDistance(_fovy, 9.0f);
+
+        QMatrix4x4 matrix;
+        camera.applyOpposite(matrix);
+
+        qDebug() << _camera.distance << "to" << camera.distance;
+
+        CardPositionAnimation cpa;
+        cpa.cardId = cardId;
+        cpa.currentStep = 0;
+        cpa.stepCount = 30;
+        cpa.control.points[0] = cardActor.position;
+        cpa.control.points[2] = matrix * QVector3D();
+        cpa.control.points[1] =
+            (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
+
+        _cardPositionAnimations.push_back(cpa);
+
+        CardRotationAnimation cra;
+        cra.cardId = cardId;
+        cra.currentStep = 0;
+        cra.stepCount = 30;
+        cra.firstRadians = cardActor.rotation.toRadians();
+        cra.lastRadians = camera.rotation.toRadians();
+        cra.magnitude = 0.0f;
+
+        _cardRotationAnimations.push_back(cra);
+
+        cra.firstRadians = cardActor.tilt.toRadians();
+        cra.lastRadians = camera.angle.toRadians();
+
+        _cardTiltAnimations.push_back(cra);
+        break;
+    }
+
     case Qt::Key_F5:
         resetCards();
         break;
@@ -432,7 +476,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_Q:
     {
-        setDarkLocations(QVector2D(2.0f, 2.0f));
+        setDarkLocations({2.0f, 2.0f});
 
         for (int i = 0; i < _state.darkSideCount; ++i)
         {
@@ -664,9 +708,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cpa.currentStep = 0;
         cpa.stepCount = 60;
         cpa.control.points[0] = cardActor.position;
-        cpa.control.points[2] = QVector3D(
+        cpa.control.points[2] = {
             _pileLocations[n].forcePile,
-            depth / 2.0f + depth * forcePileCount);
+            depth / 2.0f + depth * forcePileCount};
 
         float swing = n ? -4.0f : 4.0f;
         cpa.control.points[1] =
@@ -760,6 +804,30 @@ void MainWidget::onTimer()
         {
             actor.rotation = RotationF::fromRadians(i->lastRadians);
             i = _cardRotationAnimations.erase(i);
+        }
+    }
+
+    for (auto i = _cardTiltAnimations.begin();
+         i != _cardTiltAnimations.end();)
+    {
+        _stateChanged = true;
+        auto& actor = _cardActors[i->cardId];
+
+        if (i->currentStep < i->stepCount)
+        {
+            auto t = float(i->currentStep++) / float(i->stepCount);
+            actor.tilt = RotationF::fromRadians(Overshoot<float>(
+                i->firstRadians,
+                i->lastRadians,
+                i->magnitude,
+                t));
+
+            ++i;
+        }
+        else
+        {
+            actor.tilt = RotationF::fromRadians(i->lastRadians);
+            i = _cardTiltAnimations.erase(i);
         }
     }
 

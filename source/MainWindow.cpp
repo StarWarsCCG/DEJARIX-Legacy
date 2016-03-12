@@ -66,7 +66,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
         break;
 
-    case Qt::Key_Space:
+    //case Qt::Key_Space:
         _mainWidget.dump();
 
         _chatTabs.setTabText(1, "Spectators (13)");
