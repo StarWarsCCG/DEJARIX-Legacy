@@ -87,7 +87,6 @@ private:
     std::vector<CardRender> _faceUpCards;
     std::vector<CardRender> _faceDownCards;
     std::vector<CardRotationAnimation> _cardFlipAnimations;
-    std::vector<CardRotationAnimation> _cardTiltAnimations;
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     MatrixAnimation _colorMatrixAnimation;
