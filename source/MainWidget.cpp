@@ -298,7 +298,7 @@ void MainWidget::prepareRender()
     _faceUpCards.clear();
     _faceDownCards.clear();
 
-    for (const auto& pair : _cardActors)
+    for (const auto& pair : _cardActorsById)
     {
         const CardActor& actor = pair.second;
         QMatrix4x4 modelMatrix;
@@ -358,7 +358,7 @@ void MainWidget::resetCards()
     _pileCounts[1].lostPile = 0;
     _pileCounts[1].outOfPlay = 0;
 
-    _cardActors.clear();
+    _cardActorsById.clear();
 
     for (int i = 0; i < 60; ++i)
     {
@@ -370,7 +370,7 @@ void MainWidget::resetCards()
         actor.position = QVector3D(_pileLocations[0].reserveDeck, z);
         actor.flip = RotationF::half();
 
-        _cardActors[i] = actor;
+        _cardActorsById[i] = actor;
     }
 
     for (int i = 0; i < 60; ++i)
@@ -383,7 +383,7 @@ void MainWidget::resetCards()
         actor.position = QVector3D(_pileLocations[1].reserveDeck, z);
         actor.rotation = RotationF::half();
 
-        _cardActors[60 + i] = actor;
+        _cardActorsById[60 + i] = actor;
     }
 
     _cardFlipAnimations.clear();
@@ -441,7 +441,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 cs.location >= DarkSide(ReserveDeck) &&
                 cs.location <= DarkSide(OutOfPlay))
             {
-                CardActor cardActor = _cardActors[i];
+                CardActor cardActor = _cardActorsById[i];
 
                 CardPositionAnimation cpa;
                 cpa.cardId = i;
@@ -497,7 +497,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
 
-        CardActor cardActor = _cardActors[cardId];
+        CardActor cardActor = _cardActorsById[cardId];
         float depth = _cardModel.specifications.depth;
 
         auto usedPileCount = float(_pileCounts[0].usedPile);
@@ -536,7 +536,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cardState.isFaceUp = true;
         _state.cardStateByInstanceId[cardId] = cardState;
 
-        CardActor cardActor = _cardActors[cardId];
+        CardActor cardActor = _cardActorsById[cardId];
         float depth = _cardModel.specifications.depth;
 
         auto lostPileCount = float(_pileCounts[0].lostPile);
@@ -557,7 +557,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
         CardRotationAnimation cra;
         cra.cardId = cardId;
-        cra.currentStep = 0;
+        cra.currentStep = -15;
         cra.stepCount = 30;
         cra.firstRadians = cardActor.flip.toRadians();
         cra.lastRadians = cra.firstRadians - pi<float>();
@@ -586,7 +586,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
             if (cardState.location == DarkSide(ReserveDeck))
             {
-                CardActor cardActor = _cardActors[i];
+                CardActor cardActor = _cardActorsById[i];
 
                 CardPositionAnimation cpa;
                 cpa.cardId = i;
@@ -605,7 +605,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
             }
             else if (cardState.location == DarkSide(UsedPile))
             {
-                CardActor cardActor = _cardActors[i];
+                CardActor cardActor = _cardActorsById[i];
 
                 CardPositionAnimation cpa;
                 cpa.cardId = i;
@@ -654,7 +654,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
 
-        CardActor cardActor = _cardActors[cardId];
+        CardActor cardActor = _cardActorsById[cardId];
         float depth = _cardModel.specifications.depth;
 
         auto forcePileCount = float(_pileCounts[n].forcePile);
@@ -684,7 +684,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_F:
     {
-        auto actor = _cardActors[2];
+        auto actor = _cardActorsById[2];
         auto lastPosition = QVector3D(
             actor.position.x(),
             16.0f - actor.position.y(),
@@ -705,7 +705,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
     case Qt::Key_G:
     {
-        auto actor = _cardActors[59];
+        auto actor = _cardActorsById[59];
 
         CardPositionAnimation cpa;
         cpa.cardId = 59;
@@ -743,9 +743,14 @@ void MainWidget::onTimer()
          i != _cardRotationAnimations.end();)
     {
         _stateChanged = true;
-        auto& actor = _cardActors[i->cardId];
+        auto& actor = _cardActorsById[i->cardId];
 
-        if (i->currentStep < i->stepCount)
+        if (i->currentStep < 0)
+        {
+            ++i->currentStep;
+            ++i;
+        }
+        else if (i->currentStep < i->stepCount)
         {
             auto t = float(i->currentStep++) / float(i->stepCount);
             actor.rotation = RotationF::fromRadians(Overshoot<float>(
@@ -767,9 +772,14 @@ void MainWidget::onTimer()
          i != _cardFlipAnimations.end();)
     {
         _stateChanged = true;
-        auto& actor = _cardActors[i->cardId];
+        auto& actor = _cardActorsById[i->cardId];
 
-        if (i->currentStep < i->stepCount)
+        if (i->currentStep < 0)
+        {
+            ++i->currentStep;
+            ++i;
+        }
+        else if (i->currentStep < i->stepCount)
         {
             auto t = float(i->currentStep++) / float(i->stepCount);
             actor.flip = RotationF::fromRadians(Overshoot<float>(
@@ -791,14 +801,17 @@ void MainWidget::onTimer()
          i != _cardPositionAnimations.end();)
     {
         _stateChanged = true;
-        auto& actor = _cardActors[i->cardId];
+        auto& actor = _cardActorsById[i->cardId];
 
-        if (i->currentStep < i->stepCount)
+        if (i->currentStep < 0)
+        {
+            ++i->currentStep;
+            ++i;
+        }
+        else if (i->currentStep < i->stepCount)
         {
             auto t = float(i->currentStep++) / float(i->stepCount);
-            //actor.position = Linear(i->firstPosition, i->lastPosition, t);
             actor.position = Interpolate(i->control, t);
-            //actor.position = SCurve(i->firstPosition, i->lastPosition, t);
 
             ++i;
         }
@@ -806,6 +819,19 @@ void MainWidget::onTimer()
         {
             actor.position = i->control.points[2];
             i = _cardPositionAnimations.erase(i);
+        }
+    }
+
+    for (auto i = _cardMatrixSwaps.begin();
+         i != _cardMatrixSwaps.end();)
+    {
+        if (--i->stepsRemaining > 0)
+        {
+            ++i;
+        }
+        else
+        {
+            i = _cardMatrixSwaps.erase(i);
         }
     }
 
