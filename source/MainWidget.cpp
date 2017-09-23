@@ -66,8 +66,8 @@ void MainWidget::initializeGL()
     timer->start(16);
 
     _tableModel.texture = loadImage(QImage("../wood.jpg")).textureId();
-    loadImage(QImage("../localuprising.gif"));
-    loadImage(QImage("../liberation.gif"));
+    loadImage(QImage("../localuprising.png"));
+    loadImage(QImage("../liberation.png"));
 
     loadCardMesh();
 
@@ -97,7 +97,7 @@ void MainWidget::initializeGL()
         "uniform lowp vec4 highlight;\n"
         "varying lowp vec2 vtc;\n"
         "void main() {\n"
-        "   vec4 result = vec4(0.0, 0.0, 0.0, 1.0);\n"
+        "   vec4 result = vec4(0.08, 0.08, 0.08, 1.0);\n"
         "   if (enableTexture) result = texture2D(texture, vtc);\n"
         "   gl_FragColor = colorMatrix * (result + highlight);\n"
         "}\n";
