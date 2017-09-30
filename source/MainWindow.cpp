@@ -5,6 +5,9 @@
 #include <QMessageBox>
 #include <QMenuBar>
 #include <QDesktopServices>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QHostAddress>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -76,10 +79,25 @@ MainWindow::MainWindow(QWidget* parent)
     addDockWidget(Qt::RightDockWidgetArea, &_dock);
     setWindowTitle("DEJARIX");
     resize(1024, 768);
+
+    connect(
+        &_socket,
+        SIGNAL(connected()),
+        this,
+        SLOT(onSocketConnect()));
+
+    connect(
+        &_socket,
+        SIGNAL(readyRead()),
+        this,
+        SLOT(onSocketData()));
+
+    _socket.connectToHost(QHostAddress::LocalHost, 1138);
 }
 
 MainWindow::~MainWindow()
 {
+    _socket.close();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -143,4 +161,46 @@ void MainWindow::about()
 void MainWindow::aboutQt()
 {
     QMessageBox::aboutQt(this);
+}
+
+void MainWindow::onSocketConnect()
+{
+    QJsonObject object;
+    object["player"] = "LordVader";
+    object["password"] = "roflberulars";
+    QJsonDocument doc(object);
+    qDebug() << "json " << doc;
+    QByteArray data = doc.toJson();
+    data.prepend((char)2);
+    data.append((char)3);
+    _socket.setSocketOption(QAbstractSocket::LowDelayOption, 1);
+    _socket.write(data);
+}
+
+void MainWindow::onSocketData()
+{
+    char buffer[512];
+    auto n = _socket.read(buffer, sizeof(buffer));
+
+    for (qint64 i = 0; i < n; ++i)
+    {
+        switch (buffer[i])
+        {
+        case 2:
+            _isReading = true;
+            _data.clear();
+            break;
+        case 3:
+        {
+            _isReading = false;
+            auto json = QJsonDocument::fromJson(_data);
+            qDebug() << json;
+            break;
+        }
+        default:
+            if (_isReading)
+                _data.append(buffer[i]);
+            break;
+        }
+    }
 }
