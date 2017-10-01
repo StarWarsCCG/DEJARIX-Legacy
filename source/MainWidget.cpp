@@ -342,7 +342,6 @@ void MainWidget::prepareRender()
 
 void MainWidget::resetCards()
 {
-    _locationLayouts.clear();
     qint64 cardInfoIds[60];
     for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
     _state.start({cardInfoIds, 60, 0}, {cardInfoIds, 60, 0});
@@ -390,6 +389,7 @@ void MainWidget::resetCards()
     _cardFlipAnimations.clear();
     _cardRotationAnimations.clear();
     _cardPositionAnimations.clear();
+    _locationLayouts.clear();
 
     _stateChanged = true;
 }
@@ -560,6 +560,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         cra.cardId = cardId;
         cra.currentStep = -15;
         cra.stepCount = 30;
+        cra.magnitude = 0.25f;
         cra.firstRadians = cardActor.flip.toRadians();
         cra.lastRadians = cra.firstRadians - pi<float>();
 
@@ -726,6 +727,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         quint8 cardId = _state.topCard(DarkSide(ReserveDeck));
         qDebug() << cardId;
         if (cardId == 255) break;
+        auto wasFaceUp = _state.cardStateByInstanceId[cardId].isFaceUp;
         CardState cardState;
         cardState.mode = LocationMode;
         cardState.location = Table;
@@ -735,13 +737,33 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         _state.cardStateByInstanceId[cardId] = cardState;
 
         CardActor cardActor = _cardActorsById[cardId];
-        float depth = _cardModel.specifications.depth;
+        cardActor.position += QVector3D(0.0f, 0.0f, 4.0f);
+        _cardActorsById[cardId] = cardActor;
+
+        if (!wasFaceUp)
+        {
+            CardRotationAnimation cra;
+            cra.cardId = cardId;
+            cra.currentStep = 0;
+            cra.stepCount = 15;
+            cra.firstRadians = pi<float>();
+            cra.lastRadians = 0.0f;
+            cra.magnitude = 0.0f;
+            _cardFlipAnimations.push_back(cra);
+        }
 
         LocationLayout layout;
         float height = _cardModel.specifications.height;
         layout.radius = QVector2D(height / 2.0f, height / 2.0f);
         layout.cardId = cardId;
-        _locationLayouts.push_back(layout);
+
+        std::uniform_int_distribution<int> distribution(
+            0, _locationLayouts.size());
+
+        _locationLayouts.insert(
+            _locationLayouts.begin() + distribution(_mt),
+            layout);
+
         resetLocations();
 
         --_pileCounts[0].reserveDeck;
@@ -776,9 +798,12 @@ void MainWidget::resetLocations()
 
     float d = _cardModel.specifications.depth / 2.0f;
 
+    quint8 ordinal = 0;
+
     for (const auto& locationLayout : _locationLayouts)
     {
         int cardId = locationLayout.cardId;
+        _state.cardStateByInstanceId[cardId].ordinal = ordinal++;
         CardActor actor = _cardActorsById[cardId];
 
         CardPositionAnimation cpa;
@@ -788,7 +813,7 @@ void MainWidget::resetLocations()
             locationLayout.xPosition, 0.0f, d);
         cpa.control.points[1] =
             (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
-        cpa.stepCount = 15;
+        cpa.stepCount = 30;
         cpa.currentStep = 0;
 
         _cardPositionAnimations.push_back(cpa);
