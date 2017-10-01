@@ -342,6 +342,7 @@ void MainWidget::prepareRender()
 
 void MainWidget::resetCards()
 {
+    _locationLayouts.clear();
     qint64 cardInfoIds[60];
     for (auto& cardInfoId : cardInfoIds) cardInfoId = 1;
     _state.start({cardInfoIds, 60, 0}, {cardInfoIds, 60, 0});
@@ -720,8 +721,77 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         break;
     }
 
+    case Qt::Key_E:
+    {
+        quint8 cardId = _state.topCard(DarkSide(ReserveDeck));
+        qDebug() << cardId;
+        if (cardId == 255) break;
+        CardState cardState;
+        cardState.mode = LocationMode;
+        cardState.location = Table;
+        cardState.ordinal = _locationLayouts.size();
+        cardState.rotation = 1;
+        cardState.isFaceUp = true;
+        _state.cardStateByInstanceId[cardId] = cardState;
+
+        CardActor cardActor = _cardActorsById[cardId];
+        float depth = _cardModel.specifications.depth;
+
+        LocationLayout layout;
+        float height = _cardModel.specifications.height;
+        layout.radius = QVector2D(height / 2.0f, height / 2.0f);
+        layout.cardId = cardId;
+        _locationLayouts.push_back(layout);
+        resetLocations();
+
+        --_pileCounts[0].reserveDeck;
+
+        emit cardEvent("played location");
+        break;
+    }
+
     default:
         break;
+    }
+}
+
+void MainWidget::resetLocations()
+{
+    if (_locationLayouts.empty()) return;
+
+    float locationsWidth = 0.0f;
+    for (const auto& locationLayout : _locationLayouts)
+        locationsWidth += locationLayout.radius.x() * 2.0f;
+
+    _locationLayouts[0].xPosition =
+        locationsWidth / -2.0f + _locationLayouts[0].radius.x();
+
+    for (size_t i = 1; i < _locationLayouts.size(); ++i)
+    {
+        _locationLayouts[i].xPosition =
+            _locationLayouts[i - 1].xPosition +
+            _locationLayouts[i - 1].radius.x() +
+            _locationLayouts[i].radius.x();
+    }
+
+    float d = _cardModel.specifications.depth / 2.0f;
+
+    for (const auto& locationLayout : _locationLayouts)
+    {
+        int cardId = locationLayout.cardId;
+        CardActor actor = _cardActorsById[cardId];
+
+        CardPositionAnimation cpa;
+        cpa.cardId = cardId;
+        cpa.control.points[0] = actor.position;
+        cpa.control.points[2] = QVector3D(
+            locationLayout.xPosition, 0.0f, d);
+        cpa.control.points[1] =
+            (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
+        cpa.stepCount = 15;
+        cpa.currentStep = 0;
+
+        _cardPositionAnimations.push_back(cpa);
     }
 }
 

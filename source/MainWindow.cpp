@@ -54,7 +54,11 @@ MainWindow::MainWindow(QWidget* parent)
         SLOT(aboutQt()));
 
     auto aboutAction = new QAction(tr("&About DEJARIX"), this);
-    connect(aboutAction, SIGNAL(triggered(bool)), this, SLOT(about()));
+    connect(
+        aboutAction,
+        SIGNAL(triggered(bool)),
+        this,
+        SLOT(about()));
 
     auto helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(openDataFolderAction);
@@ -63,8 +67,18 @@ MainWindow::MainWindow(QWidget* parent)
 
     setFocusPolicy(Qt::WheelFocus);
 
-    connect(&_playerChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
-    connect(&_publicChat, SIGNAL(emptyChatSent()), this, SLOT(setFocus()));
+    connect(
+        &_playerChat,
+        SIGNAL(emptyChatSent()),
+        this,
+        SLOT(setFocus()));
+
+    connect(
+        &_publicChat,
+        SIGNAL(emptyChatSent()),
+        this,
+        SLOT(setFocus()));
+
     connect(
         &_mainWidget,
         SIGNAL(cardEvent(QString)),

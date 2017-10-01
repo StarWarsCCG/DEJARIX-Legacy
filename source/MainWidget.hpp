@@ -35,6 +35,13 @@ struct CardMatrixSwap
     int stepsRemaining;
 };
 
+struct LocationLayout
+{
+    int cardId;
+    float xPosition;
+    QVector2D radius;
+};
+
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -72,6 +79,7 @@ private:
     void loadCardMesh();
     void setDarkLocations(QVector2D position);
     void setLightLocations(QVector2D position);
+    void resetLocations();
 
     GLint _viewport[4];
     QMatrix4x4 _projectionMatrix;
@@ -96,6 +104,7 @@ private:
     std::vector<CardRotationAnimation> _cardRotationAnimations;
     std::vector<CardPositionAnimation> _cardPositionAnimations;
     std::vector<CardMatrixSwap> _cardMatrixSwaps;
+    std::vector<LocationLayout> _locationLayouts;
     MatrixAnimation _colorMatrixAnimation;
     std::mt19937_64 _mt;
     PileSet<QVector2D> _relativePileLocations;
