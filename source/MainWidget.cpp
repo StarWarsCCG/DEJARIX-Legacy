@@ -754,7 +754,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
 
         LocationLayout layout;
         float height = _cardModel.specifications.height;
-        layout.radius = QVector2D(height / 2.0f, height / 2.0f);
+        layout.size = QVector2D(height, height);
         layout.cardId = cardId;
 
         std::uniform_int_distribution<int> distribution(
@@ -783,17 +783,15 @@ void MainWidget::resetLocations()
 
     float locationsWidth = 0.0f;
     for (const auto& locationLayout : _locationLayouts)
-        locationsWidth += locationLayout.radius.x() * 2.0f;
+        locationsWidth += locationLayout.size.x();
 
-    _locationLayouts[0].xPosition =
-        locationsWidth / -2.0f + _locationLayouts[0].radius.x();
+    _locationLayouts[0].xPosition = locationsWidth / -2.0f;
 
     for (size_t i = 1; i < _locationLayouts.size(); ++i)
     {
         _locationLayouts[i].xPosition =
             _locationLayouts[i - 1].xPosition +
-            _locationLayouts[i - 1].radius.x() +
-            _locationLayouts[i].radius.x();
+            _locationLayouts[i - 1].size.x();
     }
 
     float d = _cardModel.specifications.depth / 2.0f;
@@ -806,11 +804,11 @@ void MainWidget::resetLocations()
         _state.cardStateByInstanceId[cardId].ordinal = ordinal++;
         CardActor actor = _cardActorsById[cardId];
 
+        float x = locationLayout.xPosition + locationLayout.size.x() / 2.0f;
         CardPositionAnimation cpa;
         cpa.cardId = cardId;
         cpa.control.points[0] = actor.position;
-        cpa.control.points[2] = QVector3D(
-            locationLayout.xPosition, 0.0f, d);
+        cpa.control.points[2] = QVector3D(x, 0.0f, d);
         cpa.control.points[1] =
             (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
         cpa.stepCount = 30;

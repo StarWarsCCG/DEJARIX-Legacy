@@ -39,7 +39,7 @@ struct LocationLayout
 {
     int cardId;
     float xPosition;
-    QVector2D radius;
+    QVector2D size;
 };
 
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
