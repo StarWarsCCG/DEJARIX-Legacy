@@ -6,9 +6,10 @@ void GameState::start(Deck darkDeck, Deck lightDeck)
     {
         CardState cs;
         cs.ordinal = i;
-        cs.location = DarkSide(Table);
-        cs.mode = CollectionMode;
+        cs.indent = 0;
+        cs.collection = DarkSide(Table);
         cs.rotation = 0;
+        cs.ownedByLightSide = false;
         cs.isFaceUp = true;
 
         cardStateByInstanceId[i] = cs;
@@ -19,9 +20,10 @@ void GameState::start(Deck darkDeck, Deck lightDeck)
     {
         CardState cs;
         cs.ordinal = i;
-        cs.location = DarkSide(ReserveDeck);
-        cs.mode = CollectionMode;
+        cs.indent = 0;
+        cs.collection = DarkSide(ReserveDeck);
         cs.rotation = 0;
+        cs.ownedByLightSide = false;
         cs.isFaceUp = false;
 
         cardStateByInstanceId[i] = cs;
@@ -32,9 +34,10 @@ void GameState::start(Deck darkDeck, Deck lightDeck)
     {
         CardState cs;
         cs.ordinal = i;
-        cs.location = LightSide(Table);
-        cs.mode = CollectionMode;
+        cs.indent = 0;
+        cs.collection = LightSide(Table);
         cs.rotation = 0;
+        cs.ownedByLightSide = true;
         cs.isFaceUp = true;
 
         int ii = darkDeck.cardCount + i;
@@ -46,9 +49,10 @@ void GameState::start(Deck darkDeck, Deck lightDeck)
     {
         CardState cs;
         cs.ordinal = i;
-        cs.location = LightSide(ReserveDeck);
-        cs.mode = CollectionMode;
+        cs.indent = 0;
+        cs.collection = LightSide(ReserveDeck);
         cs.rotation = 0;
+        cs.ownedByLightSide = true;
         cs.isFaceUp = false;
 
         int ii = darkDeck.cardCount + i;
@@ -69,16 +73,14 @@ void GameState::apply(CardInstance instance)
 
 void GameState::applyAll(const CardInstance* instances, int instanceCount)
 {
-    auto stepIndex = (int)millisecondsByStep.size();
-
     for (int i = 0; i < instanceCount; ++i)
     {
         auto instance = instances[i];
         cardStateByInstanceId[instance.id] = instance.state;
-        deltas.push_back({stepIndex, instance});
+        stateChanges.push_back(instance);
     }
 
-    millisecondsByStep.push_back(stopwatch.elapsed());
+    deltas.push_back({stopwatch.elapsed(), instanceCount});
 }
 
 int GameState::countCollection(quint8 collectionId) const
@@ -89,7 +91,7 @@ int GameState::countCollection(quint8 collectionId) const
     for (int i = 0; i < totalCount; ++i)
     {
         const CardState& cs = cardStateByInstanceId[i];
-        if (cs.mode == CollectionMode && cs.location == collectionId) ++result;
+        if (cs.collection == collectionId) ++result;
     }
 
     return result;
@@ -104,9 +106,7 @@ quint8 GameState::topCard(quint8 collectionId) const
     for (int i = 0; i < totalCount; ++i)
     {
         const CardState& cs = cardStateByInstanceId[i];
-        if (cs.mode == CollectionMode
-            && cs.location == collectionId
-            && cs.ordinal > ordinal)
+        if (cs.collection == collectionId && cs.ordinal > ordinal)
         {
             result = i;
             ordinal = cs.ordinal;

@@ -10,9 +10,11 @@ TARGET = DEJARIX
 TEMPLATE = app
 CONFIG += c++11
 
-!macx:!win32 {
-    QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
-    QMAKE_LFLAGS += -fsanitize=address
+CONFIG(debug, debug|release) {
+    !macx:!win32 {
+        QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+        QMAKE_LFLAGS += -fsanitize=address
+    }
 }
 
 SOURCES += main.cpp\
@@ -35,4 +37,5 @@ HEADERS  += MainWindow.hpp \
     ChatWidget.hpp \
     Curves.hpp \
     GameState.hpp \
-    Piles.hpp
+    Piles.hpp \
+    Span.hpp

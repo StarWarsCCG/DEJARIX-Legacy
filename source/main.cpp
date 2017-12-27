@@ -4,7 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-    qDebug() << sizeof(CardState);
+    qDebug() << "size of CardState --" << sizeof(CardState);
+    qDebug() << "size of CardInstance --" << sizeof(CardInstance);
     QApplication a(argc, argv);
     MainWindow w;
     //MainWidget w;

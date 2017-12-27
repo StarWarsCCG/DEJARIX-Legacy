@@ -135,6 +135,10 @@ void MainWidget::initializeGL()
 
     glEnableVertexAttribArray(_attributes.position);
     glEnableVertexAttribArray(_attributes.texture);
+
+    GLint maxSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
+    qDebug() << "max texture size -- " << maxSize;
 }
 
 void MainWidget::resizeGL(int w, int h)
@@ -438,9 +442,8 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         for (int i = 0; i < _state.darkSideCount; ++i)
         {
             CardState cs = _state.cardStateByInstanceId[i];
-            if (cs.mode == CollectionMode &&
-                cs.location >= DarkSide(ReserveDeck) &&
-                cs.location <= DarkSide(OutOfPlay))
+            if (cs.collection >= DarkSide(ReserveDeck) &&
+                cs.collection <= DarkSide(OutOfPlay))
             {
                 CardActor cardActor = _cardActorsById[i];
 
@@ -451,7 +454,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 cpa.control.points[0] = cardActor.position;
 
                 QVector2D pilePosition;
-                switch (cs.location)
+                switch (cs.collection)
                 {
                 case DarkSide(ReserveDeck):
                     pilePosition = _pileLocations[0].reserveDeck;
@@ -491,9 +494,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         qDebug() << cardId;
         if (cardId == 255) break;
         CardState cardState;
-        cardState.mode = CollectionMode;
-        cardState.location = DarkSide(UsedPile);
+        cardState.collection = DarkSide(UsedPile);
         cardState.ordinal = _pileCounts[0].usedPile;
+        cardState.indent = 0;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -530,9 +533,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         qDebug() << cardId;
         if (cardId == 255) break;
         CardState cardState;
-        cardState.mode = CollectionMode;
-        cardState.location = DarkSide(LostPile);
+        cardState.collection = DarkSide(LostPile);
         cardState.ordinal = _pileCounts[0].lostPile;
+        cardState.indent = 0;
         cardState.rotation = 0;
         cardState.isFaceUp = true;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -584,9 +587,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         {
             CardState& cardState = _state.cardStateByInstanceId[i];
 
-            if (cardState.mode != CollectionMode) continue;
+            assert(cardState.indent == 0);
 
-            if (cardState.location == DarkSide(ReserveDeck))
+            if (cardState.collection == DarkSide(ReserveDeck))
             {
                 CardActor cardActor = _cardActorsById[i];
 
@@ -605,7 +608,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                 _cardPositionAnimations.push_back(cpa);
                 cardState.ordinal += _pileCounts[0].usedPile;
             }
-            else if (cardState.location == DarkSide(UsedPile))
+            else if (cardState.collection == DarkSide(UsedPile))
             {
                 CardActor cardActor = _cardActorsById[i];
 
@@ -623,7 +626,7 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
                     (cpa.control.points[0] + cpa.control.points[2]) / 2.0f;
 
                 _cardPositionAnimations.push_back(cpa);
-                cardState.location = DarkSide(ReserveDeck);
+                cardState.collection = DarkSide(ReserveDeck);
             }
         }
 
@@ -649,9 +652,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         qDebug() << cardId;
         if (cardId == 255) break;
         CardState cardState;
-        cardState.mode = CollectionMode;
-        cardState.location = AutoSide(ForcePile, n);
+        cardState.collection = AutoSide(ForcePile, n);
         cardState.ordinal = _pileCounts[n].forcePile;
+        cardState.indent = 0;
         cardState.rotation = 0;
         cardState.isFaceUp = false;
         _state.cardStateByInstanceId[cardId] = cardState;
@@ -729,9 +732,9 @@ void MainWidget::keyPressEvent(QKeyEvent* event)
         if (cardId == 255) break;
         auto wasFaceUp = _state.cardStateByInstanceId[cardId].isFaceUp;
         CardState cardState;
-        cardState.mode = LocationMode;
-        cardState.location = Table;
+        cardState.collection = Table;
         cardState.ordinal = _locationLayouts.size();
+        cardState.indent = 0;
         cardState.rotation = 1;
         cardState.isFaceUp = true;
         _state.cardStateByInstanceId[cardId] = cardState;
